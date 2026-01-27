@@ -108,34 +108,43 @@
                     </div>
 
                 </div>
-
                 <div id="calculator-summary" class="calculator-container" style="display: none;">
-                    <h3>Resumo do Orçamento Selecionado</h3>
-                    <div class="summary-totals-container">
-                        <div class="summary-total-box" id="summary-total-geral-box">
-                            <label>TOTAL</label>
-                            <span id="summary-total-geral">R$ 0,00</span>
-                        </div>
+    
+    <h3>Observações Gerais</h3>
+    <div class="summary-obs-container">
+        <textarea id="input-observacao-global" rows="3" placeholder="Ex: Entrega em 15 dias, pagamento na entrega..."></textarea>
+    </div>
 
-                        <div class="summary-total-box" id="summary-total-avista-box">
-                            <label>TOTAL SELECIONADO</label>
-                            <span id="summary-total-avista">R$ 0,00</span>
-                        </div>
+    <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
 
-                        <div class="summary-total-box" id="summary-total-entrada" style="display: none;">
-                            <label>ENTRADA</label>
-                            <span id="summary-total-entrada-value">R$ 0,00</span>
-                        </div>
-                        <div class="summary-total-box" id="summary-total-parcelado-box">
-                            <label id="summary-parcelado-label">DÉBITO</label>
-                            <span id="summary-total-parcelado">R$ 0,00</span>
-                        </div>
-                    </div>
-                    <div class="summary-venda-container">
-                        <input type="checkbox" id="chk-summary-venda-realizada">
-                        <label for="chk-summary-venda-realizada">Marcar como Venda Realizada</label>
-                    </div>
-                </div>
+    <h3>Resumo do Orçamento Selecionado</h3>
+    <div class="summary-totals-container">
+        <div class="summary-total-box" id="summary-total-geral-box">
+            <label>TOTAL</label>
+            <span id="summary-total-geral">R$ 0,00</span>
+        </div>
+
+        <div class="summary-total-box" id="summary-total-avista-box">
+            <label>TOTAL SELECIONADO</label>
+            <span id="summary-total-avista">R$ 0,00</span>
+        </div>
+
+        <div class="summary-total-box" id="summary-total-entrada" style="display: none;">
+            <label>ENTRADA</label>
+            <span id="summary-total-entrada-value">R$ 0,00</span>
+        </div>
+        
+        <div class="summary-total-box" id="summary-total-parcelado-box">
+            <label id="summary-parcelado-label">DÉBITO</label>
+            <span id="summary-total-parcelado">R$ 0,00</span>
+        </div>
+    </div>
+
+    <div class="summary-venda-container">
+        <input type="checkbox" id="chk-summary-venda-realizada">
+        <label for="chk-summary-venda-realizada">Marcar como Venda Realizada</label>
+    </div>
+</div>
 
             </div>
         </div>

@@ -3,7 +3,7 @@ import { checkUserSession, setupLogoutButton } from './modules/auth.js';
 import { initUI, showToast, openModal, closeModal } from './modules/ui.js'; 
 import { initCRM, carregarClientes } from './modules/crm.js'; 
 import { initDataManager, renderizarTabelaTecidos, renderizarTabelaConfeccao, renderizarTabelaTrilho, renderizarTabelaFrete, renderizarTabelaInstalacao } from './modules/dataManager.js'; 
-import { initCalculator, showCalculatorView, atualizarListasAmorim, atualizarInterfaceCalculadora } from './modules/calculator.js';
+import { initCalculator, showCalculatorView, atualizarListasAmorim, atualizarInterfaceCalculadora, atualizarDadosCalculadora } from './modules/calculator.js';
 import { initTeamManager } from './modules/team.js';
 import { loadPermissions } from './modules/permissions.js';
 import { initRealtime } from './modules/realtime.js';
@@ -172,6 +172,17 @@ async function buscarDadosBaseDoBackend() {
      }, {});
 
     isDataLoadedFlag.value = true; 
+    atualizarDadosCalculadora({
+            tecidos: tecidosDataGlobal,
+            confeccao: confeccaoDataGlobal,
+            trilho: trilhoDataGlobal,
+            frete: freteDataGlobal,
+            instalacao: instalacaoDataGlobal,
+            amorim_modelos_cortina: amorimModCortina,
+            amorim_cores_cortina: amorimCorCortina,
+            amorim_modelos_toldo: amorimModToldo,
+            amorim_cores_toldo: amorimCorToldo
+        });
     document.dispatchEvent(new CustomEvent('dadosBaseCarregados')); 
     console.log("Dados carregados com sucesso.");
 

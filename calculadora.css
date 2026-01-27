@@ -570,6 +570,30 @@ body.dark-mode #container-inputs-taxas input {
 body.dark-mode #container-inputs-taxas input:focus {
     border-color: #28a745; 
 }
+.summary-obs-container {
+    padding: 10px;
+    background-color: #fff;
+    border-bottom: 1px solid #ccc;
+}
+
+.summary-obs-container label {
+    display: block;
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.summary-obs-container textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    resize: vertical;
+    box-sizing: border-box; 
+}
 
 
 @media (max-width: 768px) {

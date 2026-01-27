@@ -184,8 +184,10 @@ function renderizarTabelaAmorimGen(dados, bodyId) {
     }
     
     lista.sort((a,b) => {
-        if (a.favorito === b.favorito) return a.opcao.localeCompare(b.opcao);
-        return a.favorito ? -1 : 1;
+        const favA = !!a.favorito;
+        const favB = !!b.favorito;
+        if (favA === favB) return a.opcao.localeCompare(b.opcao);
+        return favA ? -1 : 1;
     });
 
     lista.forEach(d => {
@@ -324,15 +326,30 @@ function renderizarTabelaTrilho(opcoes) {
     const tbody = elements.tabelaTrilhoBody;
     if (!tbody) return;
     tbody.innerHTML = '';
-    const filtradas = (opcoes || []).filter(item => item.opcao !== '-');
+    
+    let filtradas = (opcoes || []).filter(item => item.opcao !== '-');
+    
+    filtradas.sort((a,b) => {
+        const favA = !!a.favorito;
+        const favB = !!b.favorito;
+        if (favA === favB) return (a.opcao || '').localeCompare(b.opcao || '');
+        return favA ? -1 : 1;
+    });
+
     if (filtradas.length === 0) { tbody.innerHTML = '<tr><td colspan="4">Nenhuma opção encontrada.</td></tr>'; return; }
 
     const botoes = gerarBotoesAcao();
 
     filtradas.forEach(d => {
         const row = tbody.insertRow();
-        row.dataset.id = d.id; row.dataset.opcao = d.opcao; row.dataset.valor = d.valor || 0; row.dataset.favorito = d.favorito || false;
-        const favoritoClass = d.favorito ? 'favorito' : ''; const favoritoIcon = d.favorito ? '★' : '☆';
+        row.dataset.id = d.id; 
+        row.dataset.opcao = d.opcao; 
+        row.dataset.valor = d.valor || 0; 
+        row.dataset.favorito = d.favorito || false;
+        
+        const favoritoClass = d.favorito ? 'favorito' : ''; 
+        const favoritoIcon = d.favorito ? '★' : '☆';
+        
         row.innerHTML = `<td class="col-favorito-acao"><span class="btn-favorito ${favoritoClass}" title="Favoritar">${favoritoIcon}</span></td><td>${d.opcao}</td><td>R$ ${formatDecimal(d.valor, 2)}</td><td>${botoes}</td>`;
     });
 }

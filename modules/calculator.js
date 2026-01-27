@@ -6,14 +6,14 @@ const BACKEND_API_URL = 'https://painel-de-controle-gcv.onrender.com';
 
 const DADOS_FRANZ_CORTINA = ["3.0", "2.8", "2.5", "2.0", "1.5", "1.2", "1.0"];
 const DADOS_FRANZ_BLACKOUT = ["2.5", "2.0", "1.5", "1.2", "1.0"];
-
-const TAXAS_PADRAO = {
+let TAXAS_PARCELAMENTO = {
+    'PIX': 0.0,
     'DÉBITO': 0.0099, '1x': 0.0299, '2x': 0.0409, '3x': 0.0478, '4x': 0.0547, '5x': 0.0614, 
     '6x': 0.0681, '7x': 0.0767, '8x': 0.0833, '9x': 0.0898, '10x': 0.0963, '11x': 0.1026,
     '12x': 0.1090, '13x': 0.1152, '14x': 0.1214, '15x': 0.1276, '16x': 0.1337, '17x': 0.1397,
     '18x': 0.1457
 };
-let TAXAS_PARCELAMENTO = { ...TAXAS_PADRAO };
+
 const DADOS_MODELO_CORTINA = []; 
 const DADOS_MODELO_TOLDO = [];
 const DADOS_COR_ACESSORIOS_CORTINA = [];
@@ -38,6 +38,7 @@ let printSettings = {
     amorim_cortina: { medidas: true, modelo: true, detalhes: true, orcamento: true },
     amorim_toldo: { medidas: true, modelo: true, detalhes: true, orcamento: true }
 };
+
 async function getAuthToken() {
   const { data: { session }, error } = await _supabase.auth.getSession();
   if (error || !session) return null;
@@ -52,6 +53,13 @@ function setDirty() {
     }
 }
 
+export function atualizarDadosCalculadora(novosDados) {
+    console.log("Atualizando dados da calculadora...");
+    dataRefs = novosDados;
+    isDataLoadedRef.value = true;
+    atualizarListasAmorim();
+}
+
 export function initCalculator(domElements, dataArrays, clientIdRef, isDataLoadedFlag) {
     elements = domElements;
     dataRefs = dataArrays;
@@ -60,6 +68,27 @@ export function initCalculator(domElements, dataArrays, clientIdRef, isDataLoade
     isDataLoadedRef = isDataLoadedFlag;
     carregarTaxasDoBanco();
     
+    elements.inputObservacaoGlobal = document.getElementById('input-observacao-global');
+    if (elements.inputObservacaoGlobal) {
+        const togglePrintVisibility = () => {
+            const container = elements.inputObservacaoGlobal.closest('.summary-obs-container');
+            if (container) {
+                if (elements.inputObservacaoGlobal.value.trim().length > 0) {
+                    container.classList.add('print-visible');
+                } else {
+                    container.classList.remove('print-visible');
+                }
+            }
+        };
+
+        elements.inputObservacaoGlobal.addEventListener('input', () => {
+            togglePrintVisibility();
+            setDirty();
+        });
+
+        togglePrintVisibility();
+    }
+
     const btnConfigPrint = document.getElementById('btn-config-print');
     const modalConfigPrint = document.getElementById('modal-config-print');
     const formConfigPrint = document.getElementById('form-config-print');
@@ -155,12 +184,8 @@ export function initCalculator(domElements, dataArrays, clientIdRef, isDataLoade
 
     if (elements.btnManualSave) {
         elements.btnManualSave.addEventListener('click', async () => {
-            if (!can('perm_calc_save')) {
-                showToast("Sem permissão para salvar.", "error");
-                return;
-            }
+            if (!can('perm_calc_save')) { showToast("Sem permissão para salvar.", "error"); return; }
             if (!currentClientIdRef.value) return;
-            
             elements.btnManualSave.disabled = true;
             if (elements.saveStatusMessage) {
                 elements.saveStatusMessage.textContent = 'Salvando...';
@@ -170,13 +195,13 @@ export function initCalculator(domElements, dataArrays, clientIdRef, isDataLoade
             elements.btnManualSave.disabled = false;
         });
     }
-if (elements.btnVoltarClientes) {
+    
+    if (elements.btnVoltarClientes) {
         elements.btnVoltarClientes.addEventListener('click', () => {
             if (isDirty) {
                 openModal(elements.modalConfirmSair);
             } else {
                 window.location.hash = '';
-                
                 if(elements.clientListView) elements.clientListView.style.display = 'block';
                 if(elements.calculatorView) elements.calculatorView.style.display = 'none';
             }
@@ -197,10 +222,7 @@ if (elements.btnVoltarClientes) {
     }
     if (elements.btnSalvarESair) {
         elements.btnSalvarESair.addEventListener('click', async () => {
-            if (!can('perm_calc_save')) {
-                showToast("Sem permissão para salvar.", "error");
-                return;
-            }
+            if (!can('perm_calc_save')) { showToast("Sem permissão para salvar.", "error"); return; }
             elements.btnSalvarESair.disabled = true;
             elements.btnSalvarESair.textContent = "Salvando...";
             await salvarEstadoCalculadora(currentClientIdRef.value);
@@ -316,6 +338,8 @@ function aplicarClassesImpressao() {
     if (!amToldo.modelo) document.body.classList.add('print-hide-amorim-toldo-modelo');
     if (!amToldo.detalhes) document.body.classList.add('print-hide-amorim-toldo-detalhes');
     if (!amToldo.orcamento) document.body.classList.add('print-hide-amorim-toldo-orcamento');
+    
+    void document.body.offsetWidth;
 }
 async function carregarTaxasDoBanco() {
     try {
@@ -327,6 +351,7 @@ async function carregarTaxasDoBanco() {
         if (response.ok) {
             const taxasSalvas = await response.json();
             if (taxasSalvas) {
+                if(!taxasSalvas['PIX']) taxasSalvas['PIX'] = 0.0;
                 TAXAS_PARCELAMENTO = taxasSalvas;
                 preencherSelectParcelamento(); 
             }
@@ -341,6 +366,7 @@ function abrirModalTaxas() {
     container.innerHTML = '';
     const chaves = Object.keys(TAXAS_PARCELAMENTO);
     chaves.sort((a, b) => {
+        if (a === 'PIX') return -1; if (b === 'PIX') return 1;
         if (a === 'DÉBITO') return -1; if (b === 'DÉBITO') return 1;
         return (parseInt(a.replace('x','')) || 0) - (parseInt(b.replace('x','')) || 0);
     });
@@ -529,10 +555,15 @@ function preencherSelectParcelamento() {
     if (!select) return;
     const valAntigo = select.value;
     select.innerHTML = '';
-    for (const key in TAXAS_PARCELAMENTO) {
-        const txt = key.includes('x') ? `${key} (${(TAXAS_PARCELAMENTO[key]*100).toFixed(2).replace('.',',')}%)` : `${key} (${(TAXAS_PARCELAMENTO[key]*100).toFixed(2).replace('.',',')}%)`;
+    const chaves = Object.keys(TAXAS_PARCELAMENTO).sort((a, b) => {
+        if (a === 'PIX') return -1; if (b === 'PIX') return 1;
+        if (a === 'DÉBITO') return -1; if (b === 'DÉBITO') return 1;
+        return (parseInt(a.replace('x','')) || 0) - (parseInt(b.replace('x','')) || 0);
+    });
+    chaves.forEach(key => {
+        const txt = key.includes('x') || key === 'DÉBITO' ? `${key} (${(TAXAS_PARCELAMENTO[key]*100).toFixed(2).replace('.',',')}%)` : `${key} (0,00%)`;
         select.appendChild(new Option(key.replace('x',''), key)).textContent = txt;
-    }
+    });
     select.value = valAntigo || 'DÉBITO';
     if(select.selectedIndex === -1) select.value = 'DÉBITO';
 }
@@ -553,19 +584,39 @@ function aguardarDadosBase() {
     });
 }
 
-function preencherSelectCalculadora(select, dados, usarChaves = false, defaultText = "Nenhum", valueAsNumber = false) {
+function preencherSelectCalculadora(select, dados, usarChaves = false, defaultText = "NENHUM", valueAsNumber = false) {
     if (!select) return;
+    const valorAtual = select.value;
     select.innerHTML = '';
-    if (usarChaves) {
-        select.appendChild(new Option(defaultText, valueAsNumber ? '0' : '-'));
-        Object.keys(dados).forEach(chave => {
-            const opt = new Option(chave, valueAsNumber ? dados[chave] : chave);
-            if (!valueAsNumber) opt.dataset.valorReal = dados[chave];
+
+    if (usarChaves || defaultText) {
+        const valDefault = valueAsNumber ? '0' : (defaultText === 'SEM TECIDO' ? 'SEM TECIDO' : '-');
+        select.appendChild(new Option(defaultText, valDefault));
+    }
+
+    if (!dados) return;
+
+    if (Array.isArray(dados) && (dados.length === 0 || typeof dados[0] === 'string')) {
+        dados.forEach(v => select.appendChild(new Option(v, v)));
+        if(valorAtual) select.value = valorAtual;
+        return;
+    }
+
+    if (Array.isArray(dados) && typeof dados[0] === 'object') {
+        const listaOrdenada = [...dados].sort((a, b) => {
+            if (!!a.favorito === !!b.favorito) return (a.opcao || '').localeCompare(b.opcao || '');
+            return a.favorito ? -1 : 1; 
+        });
+
+        listaOrdenada.forEach(item => {
+            const texto = item.opcao;
+            const valor = valueAsNumber ? item.valor : item.opcao;
+            const opt = new Option(texto, valor);
+            if (!valueAsNumber) opt.dataset.valorReal = item.valor;
             select.appendChild(opt);
         });
-    } else {
-        dados.forEach(v => select.appendChild(new Option(v, v)));
     }
+    if(valorAtual) select.value = valorAtual;
 }
 
 function preencherSelectTecidosCalculadora(select, filtroCategoria = null) {
@@ -653,11 +704,10 @@ function adicionarLinhaAmorim(tableBody, estadoLinha, isInitialLoad) {
     const template = document.getElementById('template-linha-amorim');
     const novaLinha = template.content.cloneNode(true).querySelector('tr');
     
-    preencherSelectCalculadora(novaLinha.querySelector('.select-modelo-cortina'), DADOS_MODELO_CORTINA);
-    preencherSelectCalculadora(novaLinha.querySelector('.select-comando'), DADOS_COMANDO);
-    preencherSelectCalculadora(novaLinha.querySelector('.select-lado-comando'), DADOS_LADO_COMANDO);
-    preencherSelectCalculadora(novaLinha.querySelector('.select-cor-acessorios'), DADOS_COR_ACESSORIOS_CORTINA);
-    
+    preencherSelectCalculadora(novaLinha.querySelector('.select-modelo-cortina'), DADOS_MODELO_CORTINA, true, "NENHUM");
+    preencherSelectCalculadora(novaLinha.querySelector('.select-comando'), DADOS_COMANDO, true, "NENHUM");
+    preencherSelectCalculadora(novaLinha.querySelector('.select-lado-comando'), DADOS_LADO_COMANDO, true, "NENHUM");
+    preencherSelectCalculadora(novaLinha.querySelector('.select-cor-acessorios'), DADOS_COR_ACESSORIOS_CORTINA, true, "NENHUM");
     preencherSelectCalculadora(novaLinha.querySelector('.select-instalacao'), dataRefs.instalacao, true, "NENHUM", true);
 
     setupDecimalFormatting(novaLinha.querySelector('.input-largura'), 3);
@@ -678,12 +728,12 @@ function adicionarLinhaAmorim(tableBody, estadoLinha, isInitialLoad) {
         novaLinha.querySelector('.input-ambiente').value = estadoLinha.ambiente || '';
         novaLinha.querySelector('.input-largura').value = formatDecimal(estadoLinha.largura, 3);
         novaLinha.querySelector('.input-altura').value = formatDecimal(estadoLinha.altura, 3);
-        novaLinha.querySelector('.select-modelo-cortina').value = estadoLinha.modelo_cortina || DADOS_MODELO_CORTINA[0];
+        novaLinha.querySelector('.select-modelo-cortina').value = estadoLinha.modelo_cortina || 'NENHUM';
         novaLinha.querySelector('.input-cod-tecido').value = estadoLinha.codigo_tecido || '';
         novaLinha.querySelector('.input-colecao').value = estadoLinha.colecao || '';
-        novaLinha.querySelector('.select-cor-acessorios').value = estadoLinha.cor_acessorios || DADOS_COR_ACESSORIOS_CORTINA[0];
-        selComando.value = estadoLinha.comando || DADOS_COMANDO[0];
-        novaLinha.querySelector('.select-lado-comando').value = estadoLinha.lado_comando || DADOS_LADO_COMANDO[0];
+        novaLinha.querySelector('.select-cor-acessorios').value = estadoLinha.cor_acessorios || 'NENHUM';
+        selComando.value = estadoLinha.comando || 'NENHUM';
+        novaLinha.querySelector('.select-lado-comando').value = estadoLinha.lado_comando || 'NENHUM';
         if(estadoLinha.comando === 'MOTORIZADO') selMotor.value = estadoLinha.altura_comando || '127v';
         else inpManual.value = estadoLinha.altura_comando || '';
         toggleCmd();
@@ -717,11 +767,10 @@ function adicionarLinhaToldos(tableBody, estadoLinha, isInitialLoad) {
     const template = document.getElementById('template-linha-toldos');
     const novaLinha = template.content.cloneNode(true).querySelector('tr');
     
-    preencherSelectCalculadora(novaLinha.querySelector('.select-modelo-toldo'), DADOS_MODELO_TOLDO);
-    preencherSelectCalculadora(novaLinha.querySelector('.select-cor-acessorios'), DADOS_COR_ACESSORIOS_TOLDO);
-    preencherSelectCalculadora(novaLinha.querySelector('.select-comando'), DADOS_COMANDO);
-    preencherSelectCalculadora(novaLinha.querySelector('.select-lado-comando'), DADOS_LADO_COMANDO);
-    
+    preencherSelectCalculadora(novaLinha.querySelector('.select-modelo-toldo'), DADOS_MODELO_TOLDO, true, "NENHUM");
+    preencherSelectCalculadora(novaLinha.querySelector('.select-cor-acessorios'), DADOS_COR_ACESSORIOS_TOLDO, true, "NENHUM");
+    preencherSelectCalculadora(novaLinha.querySelector('.select-comando'), DADOS_COMANDO, true, "NENHUM");
+    preencherSelectCalculadora(novaLinha.querySelector('.select-lado-comando'), DADOS_LADO_COMANDO, true, "NENHUM");
     preencherSelectCalculadora(novaLinha.querySelector('.select-instalacao'), dataRefs.instalacao, true, "NENHUM", true);
 
     setupDecimalFormatting(novaLinha.querySelector('.input-largura'), 3);
@@ -742,12 +791,12 @@ function adicionarLinhaToldos(tableBody, estadoLinha, isInitialLoad) {
         novaLinha.querySelector('.input-ambiente').value = estadoLinha.ambiente || '';
         novaLinha.querySelector('.input-largura').value = formatDecimal(estadoLinha.largura, 3);
         novaLinha.querySelector('.input-altura').value = formatDecimal(estadoLinha.altura, 3);
-        novaLinha.querySelector('.select-modelo-toldo').value = estadoLinha.modelo_toldo || DADOS_MODELO_TOLDO[0];
+        novaLinha.querySelector('.select-modelo-toldo').value = estadoLinha.modelo_toldo || 'NENHUM';
         novaLinha.querySelector('.input-cod-tecido').value = estadoLinha.codigo_tecido || '';
         novaLinha.querySelector('.input-colecao').value = estadoLinha.colecao || '';
-        novaLinha.querySelector('.select-cor-acessorios').value = estadoLinha.cor_acessorios || DADOS_COR_ACESSORIOS_TOLDO[0];
-        selComando.value = estadoLinha.comando || DADOS_COMANDO[0];
-        novaLinha.querySelector('.select-lado-comando').value = estadoLinha.lado_comando || DADOS_LADO_COMANDO[0];
+        novaLinha.querySelector('.select-cor-acessorios').value = estadoLinha.cor_acessorios || 'NENHUM';
+        selComando.value = estadoLinha.comando || 'NENHUM';
+        novaLinha.querySelector('.select-lado-comando').value = estadoLinha.lado_comando || 'NENHUM';
         if(estadoLinha.comando === 'MOTORIZADO') selMotor.value = estadoLinha.altura_comando || '127v';
         else inpManual.value = estadoLinha.altura_comando || '';
         toggleCmd();
@@ -937,26 +986,28 @@ async function calcularOrcamentoLinha(linha) {
 }
 
 export function atualizarListasAmorim() {
-    console.log("Atualizando listas Amorim na calculadora...");
-    
+    const sortAmorim = (a, b) => {
+        const favA = !!a.favorito;
+        const favB = !!b.favorito;
+        if (favA === favB) return (a.opcao || '').localeCompare(b.opcao || '');
+        return favA ? -1 : 1;
+    };
+
     if (dataRefs.amorim_modelos_cortina) {
         DADOS_MODELO_CORTINA.length = 0; 
-        DADOS_MODELO_CORTINA.push(...dataRefs.amorim_modelos_cortina.map(i => i.opcao).sort());
+        DADOS_MODELO_CORTINA.push(...[...dataRefs.amorim_modelos_cortina].sort(sortAmorim).map(i => i));
     }
-
     if (dataRefs.amorim_modelos_toldo) {
         DADOS_MODELO_TOLDO.length = 0;
-        DADOS_MODELO_TOLDO.push(...dataRefs.amorim_modelos_toldo.map(i => i.opcao).sort());
+        DADOS_MODELO_TOLDO.push(...[...dataRefs.amorim_modelos_toldo].sort(sortAmorim).map(i => i));
     }
-
     if (dataRefs.amorim_cores_cortina) {
         DADOS_COR_ACESSORIOS_CORTINA.length = 0;
-        DADOS_COR_ACESSORIOS_CORTINA.push(...dataRefs.amorim_cores_cortina.map(i => i.opcao).sort());
+        DADOS_COR_ACESSORIOS_CORTINA.push(...[...dataRefs.amorim_cores_cortina].sort(sortAmorim).map(i => i));
     }
-
     if (dataRefs.amorim_cores_toldo) {
         DADOS_COR_ACESSORIOS_TOLDO.length = 0;
-        DADOS_COR_ACESSORIOS_TOLDO.push(...dataRefs.amorim_cores_toldo.map(i => i.opcao).sort());
+        DADOS_COR_ACESSORIOS_TOLDO.push(...[...dataRefs.amorim_cores_toldo].sort(sortAmorim).map(i => i));
     }
 }
 
@@ -1004,10 +1055,11 @@ async function carregarEstadoCalculadora(clientId) {
             estadoAbas = [{ nome: "Orçamento 1", sections: {}, venda_realizada: false }];
             if(elements.calculatorMarkupInput) elements.calculatorMarkupInput.value = '100';
             printSettings = {
-        tecido: { medidas: true, cortina: true, forro: true, blackout: true, valores: true, orcamento: true },
-        amorim_cortina: { medidas: true, modelo: true, detalhes: true, orcamento: true },
-        amorim_toldo: { medidas: true, modelo: true, detalhes: true, orcamento: true }
-    };
+                tecido: { medidas: true, cortina: true, forro: true, blackout: true, valores: true, orcamento: true },
+                amorim_cortina: { medidas: true, modelo: true, detalhes: true, orcamento: true },
+                amorim_toldo: { medidas: true, modelo: true, detalhes: true, orcamento: true }
+            };
+            if(elements.inputObservacaoGlobal) elements.inputObservacaoGlobal.value = '';
         } else {
             const data = await res.json();
             estadoAbas = data.abas || [{ nome: "Orçamento 1", sections: {}, venda_realizada: false }];
@@ -1015,6 +1067,8 @@ async function carregarEstadoCalculadora(clientId) {
             if(elements.selectParcelamentoGlobal) elements.selectParcelamentoGlobal.value = data.parcelamento || 'DÉBITO';
             if(elements.selectFreteGlobal) elements.selectFreteGlobal.value = data.frete || '0';
             if(elements.inputValorEntradaGlobal) elements.inputValorEntradaGlobal.value = data.entrada || '';
+            if(elements.inputObservacaoGlobal) elements.inputObservacaoGlobal.value = data.observacao_global || '';
+            elements.inputObservacaoGlobal.dispatchEvent(new Event('input'));
         }
         renderizarTabs();
         ativarAba(0, true);
@@ -1042,7 +1096,8 @@ async function salvarEstadoCalculadora(clientId) {
         markup: elements.calculatorMarkupInput?.value,
         parcelamento: elements.selectParcelamentoGlobal?.value,
         frete: elements.selectFreteGlobal?.value,
-        entrada: elements.inputValorEntradaGlobal?.value
+        entrada: elements.inputValorEntradaGlobal?.value,
+        observacao_global: elements.inputObservacaoGlobal?.value
     };
 
     try {
