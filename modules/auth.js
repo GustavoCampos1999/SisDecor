@@ -10,18 +10,27 @@ export async function checkUserSession() {
         window.location.href = 'Login/login.html';
         return;
     }
-
     if (session) {
         try {
             const { data: perfil, error: perfilError } = await _supabase
                 .from('perfis')
                 .select('nome_usuario, is_super_admin, loja_id') 
-                .eq('user_id', session.user.id) 
-                .single();
+                .eq('user_id', session.user.id)
+                .order('id', { ascending: false })
+                .limit(1) 
+                .maybeSingle(); 
+
             console.log("Perfil vindo do banco:", perfil);
+
             if (perfilError) throw perfilError;
+            if (!perfil) {
+                console.warn("Usuário logado sem perfil na tabela.");
+                return;
+            }
+
             const userElement = document.getElementById('user-email');
             if (userElement) userElement.textContent = `Olá, ${perfil.nome_usuario || 'Usuário'}`;
+
             if (!perfil.is_super_admin && perfil.loja_id) {
                 const { data: loja, error: lojaError } = await _supabase
                     .from('lojas')

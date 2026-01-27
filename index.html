@@ -423,84 +423,58 @@
         </div>
     </template>
     <template id="template-section-tecido">
-        <div class="quote-section" data-section-type="tecido">
-            <div class="quote-section-header">
-                <div class="quote-section-title-group">
-                    <button class="btn-abrir-config-calculadora" title="Configurações de Cálculo">⚙️</button>
-                    <h3>Cortinas Tecido</h3>
-                </div>
-                <div>
-                    <button class="btn-move-secao btn-move-up" title="Mover para cima">▲</button>
-                    <button class="btn-move-secao btn-move-down" title="Mover para baixo">▼</button>
-                    <button class="btn-add-linha btn-adicionar">+ Ambiente</button>
-                    <button class="btn-remover-secao btn-excluir" title="Remover seção">×</button>
-                </div>
+    <div class="quote-section" data-section-type="tecido">
+        <div class="quote-section-header">
+            <div class="quote-section-title-group">
+                <button class="btn-abrir-config-calculadora" title="Configurações de Cálculo">⚙️</button>
+                <h3>Cortinas Tecido</h3>
             </div>
-            <div class="tabela-container calculator-container">
-                <table class="tabela-calculo">
-                    <colgroup>
-                        <col class="print-col-acoes">
-                        <col class="print-col-selecionar">
-                        <col class="print-col-ambiente">
-                        <col class="print-col-largura">
-                        <col class="print-col-altura">
-                        <col class="print-col-franz-cortina">
-                        <col class="print-col-cod-cortina">
-                        <col class="print-col-qtd-cortina">
-                        <col class="print-col-cod-forro">
-                        <col class="print-col-qtd-forro">
-                        <col class="print-col-franz-blackout">
-                        <col class="print-col-cod-blackout">
-                        <col class="print-col-qtd-blackout">
-                        <col class="print-col-confeccao">
-                        <col class="print-col-trilho">
-                        <col class="print-col-instalacao">
-                        <col class="print-col-outros">
-                        <col class="print-col-total">
-                        <col class="print-col-parcelado">
-                        <col class="print-col-observacao">
-                    </colgroup>
-                    <thead>
-    <tr>
-        <th rowspan="2" class="col-acoes-calc">AÇÕES</th>
-        <th rowspan="2" class="col-selecionar-calc" title="Selecionar para somar">✓</th>
-        <th rowspan="2" class="col-ambiente-calc">AMBIENTE</th>
-        <th colspan="2" class="sessao-medidas">MEDIDAS</th>
-
-        <th colspan="2" class="sessao-cortina">TECIDO CORTINA</th>
-
-        <th colspan="1" class="sessao-forro">TECIDO FORRO</th>
-
-        <th colspan="2" class="sessao-blackout">BLACKOUT</th>
-
-        <th colspan="3" class="sessao-valores">VALORES</th>
-        <th colspan="3" class="sessao-orcamento">ORÇAMENTO</th>
-    </tr>
-    <tr>
-        <th class="sessao-medidas">LARGURA</th>
-        <th class="sessao-medidas">ALTURA</th>
-        <th class="sessao-cortina">FRANZIDO</th>
-        <th class="sessao-cortina">CÓDIGO TECIDO</th>
-        <th class="sessao-cortina">QTD.</th>
-        <th class="sessao-forro">CÓDIGO TECIDO</th>
-        <th class="sessao-forro">QTD.</th>
-        <th class="sessao-blackout">FRANZIDO</th>
-        <th class="sessao-blackout">CÓDIGO TECIDO</th>
-        <th class="sessao-blackout">QTD.</th>
-        <th class="sessao-valores col-confeccao-header">CONFECÇÃO</th>
-        <th class="sessao-valores">TRILHO</th>
-        <th class="sessao-valores">INSTALAÇÃO</th>
-        <th class="sessao-valores">OUTROS</th>
-        <th class="sessao-orcamento">TOTAL</th>
-        <th id="th-parcelado-header" class="th-parcelado-header sessao-orcamento">DÉBITO</th>
-        <th class="sessao-orcamento">OBSERVAÇÃO</th>
-    </tr>
-</thead>
-                    <tbody class="tabela-calculo-body"></tbody>
-                </table>
+            <div>
+                <button class="btn-move-secao btn-move-up" title="Mover para cima">▲</button>
+                <button class="btn-move-secao btn-move-down" title="Mover para baixo">▼</button>
+                <button class="btn-add-linha btn-adicionar">+ Ambiente</button>
+                <button class="btn-remover-secao btn-excluir" title="Remover seção">×</button>
             </div>
         </div>
-    </template>
+        <div class="tabela-container calculator-container">
+            <table class="tabela-calculo">
+                <thead>
+                    <tr>
+                        <th rowspan="2" class="col-acoes-calc">AÇÕES</th>
+                        <th rowspan="2" class="col-selecionar-calc" title="Selecionar para somar">✓</th>
+                        <th rowspan="2" class="col-ambiente-calc">AMBIENTE</th>
+                        <th colspan="2" class="sessao-medidas">MEDIDAS</th>
+                        <th colspan="2" class="sessao-cortina">TECIDO CORTINA</th> 
+                        <th colspan="1" class="sessao-forro">TECIDO FORRO</th>   
+                        <th colspan="2" class="sessao-blackout">BLACKOUT</th>       
+                        <th colspan="4" class="sessao-valores">VALORES</th>         
+                        <th colspan="3" class="sessao-orcamento">ORÇAMENTO</th>
+                    </tr>
+                    <tr>
+                        <th class="sessao-medidas">LARGURA</th>
+                        <th class="sessao-medidas">ALTURA</th>
+                        <th class="sessao-cortina">FRANZIDO</th>
+                        <th class="sessao-cortina">CÓDIGO TECIDO</th>
+                        <th class="sessao-cortina col-hidden" style="display: none;">QTD.</th> 
+                        <th class="sessao-forro">CÓDIGO TECIDO</th>
+                        <th class="sessao-forro col-hidden" style="display: none;">QTD.</th> 
+                        <th class="sessao-blackout">FRANZIDO</th>
+                        <th class="sessao-blackout">CÓDIGO TECIDO</th>
+                        <th class="sessao-blackout col-hidden" style="display: none;">QTD.</th> 
+                        <th class="sessao-valores col-confeccao-header">CONFECÇÃO</th>
+                        <th class="sessao-valores">TRILHO</th>
+                        <th class="sessao-valores">INSTALAÇÃO</th>
+                        <th class="sessao-valores">OUTROS</th>
+                        <th class="sessao-orcamento">TOTAL</th>
+                        <th id="th-parcelado-header" class="th-parcelado-header sessao-orcamento">DÉBITO</th>
+                        <th class="sessao-orcamento">OBSERVAÇÃO</th>
+                    </tr>
+                </thead>
+                <tbody class="tabela-calculo-body"></tbody>
+            </table>
+        </div>
+    </div>
+</template>
 <template id="template-section-amorim">
         <div class="quote-section" data-section-type="amorim">
             <div class="quote-section-header">
@@ -882,56 +856,30 @@
         </div>
     </template>
 
-    <template id="template-linha-tecido">
-        <tr class="linha-calculo-cliente" data-linha-type="tecido">
-            <td class="col-acoes-calc"><button class="btn-remover-linha btn-excluir">×</button></td>
-            <td class="col-selecionar-calc"><input type="checkbox" class="select-linha-checkbox" title="Selecionar linha"></td>
-            <td class="col-ambiente-calc"><input type="text" class="input-ambiente" placeholder="Ex: Sala"></td>
-            <td><input type="text" inputmode="decimal" class="input-largura"></td>
-            <td><input type="text" inputmode="decimal" class="input-altura"></td>
-            <td><select class="select-franzCortina"></select></td>
-            <td><select class="select-codTecidoCortina"></select></td>
-            <td><input type="text" class="resultado" readonly></td>
-            <td><select class="select-codTecidoForro"></select></td>
-            <td><input type="text" class="resultado" readonly></td>
-            <td><select class="select-franzBlackout"></select></td>
-            <td><select class="select-codTecidoBlackout"></select></td>
-            <td><input type="text" class="resultado" readonly></td>
-            <td class="col-confeccao-cell"><select class="select-confecao"></select></td>
-            <td><select class="select-trilho"></select></td>
-            <td><select class="select-instalacao"></select></td>
-            <td><input type="text" class="input-outros format-money"></td>
-            <td><input type="text" class="resultado-preco-total" readonly></td>
-            <td><input type="text" class="resultado-preco-parcelado" readonly></td>
-            <td><input type="text" class="input-observacao" placeholder="Obs..."></td>
-        </tr>
-    </template>
-
-    <template id="template-linha-amorim">
-        <tr class="linha-calculo-cliente" data-linha-type="amorim">
-            <td class="col-acoes-calc"><button class="btn-remover-linha btn-excluir">×</button></td>
-            <td class="col-selecionar-calc"><input type="checkbox" class="select-linha-checkbox" title="Selecionar linha"></td>
-            <td class="col-ambiente-calc"><input type="text" class="input-ambiente" placeholder="Ex: Sala"></td>
-            <td><input type="text" inputmode="decimal" class="input-largura"></td>
-            <td><input type="text" inputmode="decimal" class="input-altura"></td>
-            <td><select class="select-modelo-cortina"></select></td>
-            <td><input type="text" class="input-cod-tecido" placeholder="Código..."></td>
-            <td><input type="text" class="input-colecao" placeholder="Coleção..."></td>
-            <td><select class="select-cor-acessorios"></select></td>
-            <td><select class="select-comando"></select></td>
-            <td class="col-altura-comando">
-                <input type="text" class="input-altura-comando-manual" placeholder="Ex: 1.50">
-                <select class="select-altura-comando-motor hidden">
-                    <option value="127v">127v</option>
-                    <option value="220v">220v</option>
-                </select>
-            </td>
-            <td><select class="select-lado-comando"></select></td>
-            <td><input type="text" class="input-valor-manual format-money resultado-preco-total" inputmode="decimal"></td>
-            <td><input type="text" class="resultado-preco-parcelado" readonly></td>
-            <td><input type="text" class="input-observacao" placeholder="Obs..."></td>
-        </tr>
-    </template>
+ <template id="template-linha-tecido">
+    <tr class="linha-calculo-cliente" data-linha-type="tecido">
+        <td class="col-acoes-calc"><button class="btn-remover-linha btn-excluir">×</button></td>
+        <td class="col-selecionar-calc"><input type="checkbox" class="select-linha-checkbox" title="Selecionar linha"></td>
+        <td class="col-ambiente-calc"><input type="text" class="input-ambiente" placeholder="Ex: Sala"></td>
+        <td><input type="text" inputmode="decimal" class="input-largura"></td>
+        <td><input type="text" inputmode="decimal" class="input-altura"></td>
+        <td><select class="select-franzCortina"></select></td>
+        <td><select class="select-codTecidoCortina"></select></td>
+        <td class="col-hidden" style="display: none;"><input type="text" class="resultado" readonly></td> 
+        <td><select class="select-codTecidoForro"></select></td>
+        <td class="col-hidden" style="display: none;"><input type="text" class="resultado" readonly></td> 
+        <td><select class="select-franzBlackout"></select></td>
+        <td><select class="select-codTecidoBlackout"></select></td>
+        <td class="col-hidden" style="display: none;"><input type="text" class="resultado" readonly></td> 
+        <td class="col-confeccao-cell"><select class="select-confecao"></select></td>
+        <td><select class="select-trilho"></select></td>
+        <td><select class="select-instalacao"></select></td>
+        <td><input type="text" class="input-outros format-money"></td>
+        <td><input type="text" class="resultado-preco-total" readonly></td>
+        <td><input type="text" class="resultado-preco-parcelado" readonly></td>
+        <td><input type="text" class="input-observacao" placeholder="Obs..."></td>
+    </tr>
+</template>
 
     <template id="template-linha-toldos">
         <tr class="linha-calculo-cliente" data-linha-type="toldos">

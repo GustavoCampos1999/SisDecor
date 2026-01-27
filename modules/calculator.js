@@ -104,6 +104,8 @@ export function initCalculator(domElements, dataArrays, clientIdRef, isDataLoade
     if (formConfigPrint) {
         formConfigPrint.addEventListener('submit', (e) => {
             e.preventDefault();
+            aplicarClassesImpressao();
+            closeModal(modalConfigPrint);
             printSettings.tecido.medidas = document.getElementById('print-tecido-medidas').checked;
             printSettings.tecido.cortina = document.getElementById('print-tecido-cortina').checked;
             printSettings.tecido.forro = document.getElementById('print-tecido-forro').checked;
@@ -288,47 +290,33 @@ if (elements.btnVoltarClientes) {
     if (elements.btnCancelarExcluirSecao) elements.btnCancelarExcluirSecao.addEventListener('click', () => closeModal(elements.modalExcluirSecao));
     if (elements.btnFecharConfigCalculadora) elements.btnFecharConfigCalculadora.addEventListener('click', () => closeModal(elements.modalConfigCalculadora));
 }
-
 function aplicarClassesImpressao() {
-    const container = document.getElementById('quote-sections-container');
-    if (!container) return;
-
-    const classesParaRemover = [
-        'print-hide-tecido-medidas', 'print-hide-tecido-cortina', 'print-hide-tecido-forro', 
-        'print-hide-tecido-blackout', 'print-hide-tecido-valores', 'print-hide-tecido-orcamento',
-        'print-hide-amorim-cortina-medidas', 'print-hide-amorim-cortina-modelo', 'print-hide-amorim-cortina-detalhes', 'print-hide-amorim-cortina-orcamento',
-        'print-hide-amorim-toldo-medidas', 'print-hide-amorim-toldo-modelo', 'print-hide-amorim-toldo-detalhes', 'print-hide-amorim-toldo-orcamento'
-    ];
-
-    document.querySelectorAll('.quote-section').forEach(section => {
-        section.classList.remove(...classesParaRemover);
-        const type = section.dataset.sectionType;
-
-        if (type === 'tecido') {
-            if (!printSettings.tecido.medidas) section.classList.add('print-hide-tecido-medidas');
-            if (!printSettings.tecido.cortina) section.classList.add('print-hide-tecido-cortina');
-            if (!printSettings.tecido.forro) section.classList.add('print-hide-tecido-forro');
-            if (!printSettings.tecido.blackout) section.classList.add('print-hide-tecido-blackout');
-            if (!printSettings.tecido.valores) section.classList.add('print-hide-tecido-valores');
-            if (!printSettings.tecido.orcamento) section.classList.add('print-hide-tecido-orcamento');
-        } 
-        else if (type === 'amorim') {
-            const settings = printSettings.amorim_cortina || { medidas: true, modelo: true, detalhes: true, orcamento: true };
-            if (!settings.medidas) section.classList.add('print-hide-amorim-cortina-medidas');
-            if (!settings.modelo) section.classList.add('print-hide-amorim-cortina-modelo');
-            if (!settings.detalhes) section.classList.add('print-hide-amorim-cortina-detalhes');
-            if (!settings.orcamento) section.classList.add('print-hide-amorim-cortina-orcamento');
-        } 
-        else if (type === 'toldos') { 
-            const settings = printSettings.amorim_toldo || { medidas: true, modelo: true, detalhes: true, orcamento: true };
-            if (!settings.medidas) section.classList.add('print-hide-amorim-toldo-medidas');
-            if (!settings.modelo) section.classList.add('print-hide-amorim-toldo-modelo');
-            if (!settings.detalhes) section.classList.add('print-hide-amorim-toldo-detalhes');
-            if (!settings.orcamento) section.classList.add('print-hide-amorim-toldo-orcamento');
-        }
+    const classesParaRemover = [];
+    document.body.classList.forEach(cls => {
+        if (cls.startsWith('print-hide-')) classesParaRemover.push(cls);
     });
-}
+    classesParaRemover.forEach(cls => document.body.classList.remove(cls));
 
+    const tecido = printSettings.tecido || {};
+    if (!tecido.medidas) document.body.classList.add('print-hide-tecido-medidas');
+    if (!tecido.cortina) document.body.classList.add('print-hide-tecido-cortina');
+    if (!tecido.forro) document.body.classList.add('print-hide-tecido-forro');
+    if (!tecido.blackout) document.body.classList.add('print-hide-tecido-blackout');
+    if (!tecido.valores) document.body.classList.add('print-hide-tecido-valores');
+    if (!tecido.orcamento) document.body.classList.add('print-hide-tecido-orcamento');
+
+    const amCortina = printSettings.amorim_cortina || {};
+    if (!amCortina.medidas) document.body.classList.add('print-hide-amorim-cortina-medidas');
+    if (!amCortina.modelo) document.body.classList.add('print-hide-amorim-cortina-modelo');
+    if (!amCortina.detalhes) document.body.classList.add('print-hide-amorim-cortina-detalhes');
+    if (!amCortina.orcamento) document.body.classList.add('print-hide-amorim-cortina-orcamento');
+
+    const amToldo = printSettings.amorim_toldo || {};
+    if (!amToldo.medidas) document.body.classList.add('print-hide-amorim-toldo-medidas');
+    if (!amToldo.modelo) document.body.classList.add('print-hide-amorim-toldo-modelo');
+    if (!amToldo.detalhes) document.body.classList.add('print-hide-amorim-toldo-detalhes');
+    if (!amToldo.orcamento) document.body.classList.add('print-hide-amorim-toldo-orcamento');
+}
 async function carregarTaxasDoBanco() {
     try {
         const token = await getAuthToken();
