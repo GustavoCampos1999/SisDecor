@@ -14,7 +14,7 @@ app.set('trust proxy', 1);
 const allowedOrigins = [
   'https://gustavocampos1999.github.io', 
   'http://127.0.0.1:5500',
-  'https://sisdecor.com.br/',
+  'https://sisdecor.com.br',
   'http://localhost:5500'
 ];
 
