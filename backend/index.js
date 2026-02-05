@@ -147,22 +147,13 @@ app.post('/register', createAccountLimiter, async (req, res) => {
     const { email, password, cnpj, nome_empresa, telefone, nome_usuario } = validacao.data;
 
     try {
-        console.log("--- Iniciando Processo de Registro ---");
-        
-        const { data: existingLoja, error: cnpjCheckError } = await supabaseService
+        const { data: existingLoja } = await supabaseService
             .from('lojas')
             .select('id')
             .eq('cnpj', cnpj)
             .maybeSingle();
         
-        if (cnpjCheckError) throw cnpjCheckError;
-        if (existingLoja) return res.status(409).json({ erro: "Este CNPJ já está cadastrado em nossa base." });
-
-        const { data: listData, error: listError } = await supabaseService.auth.admin.listUsers();
-        if (listError) throw listError;
-        
-        const emailExists = listData.users.some(u => u.email.toLowerCase() === email.toLowerCase());
-        if (emailExists) return res.status(409).json({ erro: "Este e-mail já está em uso." });
+        if (existingLoja) return res.status(409).json({ erro: "Este CNPJ já está cadastrado." });
 
         const { data: userData, error: userError } = await supabaseService.auth.signUp({
             email, 
@@ -171,11 +162,10 @@ app.post('/register', createAccountLimiter, async (req, res) => {
         });
         
         if (userError) throw userError;
-        if (!userData.user) throw new Error("Falha ao gerar UID do usuário.");
 
-        const dataExpiracaoTeste = new Date();
-        dataExpiracaoTeste.setDate(dataExpiracaoTeste.getDate() + 30);
-        const dataFormatada = dataExpiracaoTeste.toISOString();
+        const dataExpiracao = new Date();
+        dataExpiracao.setDate(dataExpiracao.getDate() + 30);
+        const dataISO = dataExpiracao.toISOString();
 
         const { data: lojaData, error: lojaError } = await supabaseService
             .from('lojas')
@@ -184,50 +174,36 @@ app.post('/register', createAccountLimiter, async (req, res) => {
                 owner_user_id: userData.user.id,
                 cnpj: cnpj,
                 telefone: telefone, 
-                status_assinatura: 'teste', 
-                data_fim_teste: dataFormatada,
-                trial_ends_at: dataFormatada 
+                status_assinatura: 'teste',      
+                subscription_status: 'trialing', 
+                data_fim_teste: dataISO,         
+                trial_ends_at: dataISO           
             }).select('id').single();
             
-        if (lojaError) {
-            console.error("Erro ao criar loja no banco:", lojaError.message);
-            throw new Error("Erro ao salvar os dados da empresa.");
-        }
+        if (lojaError) throw lojaError;
 
-        const { error: perfilError } = await supabaseService.from('perfis').insert({
+        await supabaseService.from('perfis').insert({
             user_id: userData.user.id,
             loja_id: lojaData.id,
             role: 'admin',
             nome_usuario
         });
-        
-        if (perfilError) {
-            console.error("Erro ao criar perfil admin:", perfilError.message);
-            throw new Error("Erro ao vincular administrador à empresa.");
-        }
 
         try {
-            const insertCortinas = DEFAULT_CORTINA.map(opcao => ({ loja_id: lojaData.id, opcao }));
-            const insertToldos = DEFAULT_TOLDO.map(opcao => ({ loja_id: lojaData.id, opcao }));
-            const insertCoresCortina = DEFAULT_CORES_CORTINA.map(opcao => ({ loja_id: lojaData.id, opcao }));
-            const insertCoresToldo = DEFAULT_CORES_TOLDO.map(opcao => ({ loja_id: lojaData.id, opcao }));
-
+            const insertData = (arr) => arr.map(opcao => ({ loja_id: lojaData.id, opcao }));
             await Promise.allSettled([
-                supabaseService.from('amorim_modelos_cortina').insert(insertCortinas),
-                supabaseService.from('amorim_modelos_toldo').insert(insertToldos),
-                supabaseService.from('amorim_cores_cortina').insert(insertCoresCortina),
-                supabaseService.from('amorim_cores_toldo').insert(insertCoresToldo)
+                supabaseService.from('amorim_modelos_cortina').insert(insertData(DEFAULT_CORTINA)),
+                supabaseService.from('amorim_modelos_toldo').insert(insertData(DEFAULT_TOLDO)),
+                supabaseService.from('amorim_cores_cortina').insert(insertData(DEFAULT_CORES_CORTINA)),
+                supabaseService.from('amorim_cores_toldo').insert(insertData(DEFAULT_CORES_TOLDO))
             ]);
-        } catch (seedError) {
-            console.warn("Aviso: Falha parcial ao inserir configurações padrão:", seedError.message);
-        }
+        } catch (e) { console.warn("Falha ao inserir dados padrão."); }
 
-        console.log(`✅ Registro finalizado com sucesso: ${email}`);
-        res.status(201).json({ mensagem: "Conta criada! Verifique seu e-mail para confirmar o cadastro." });
+        res.status(201).json({ mensagem: "Registro concluído com sucesso!" });
 
    } catch (error) {
-        console.error("❌ ERRO NO PROCESSO DE REGISTRO:", error.message);
-        res.status(500).json({ erro: error.message || "Erro interno ao processar cadastro." });
+        console.error("Erro no registro:", error.message);
+        res.status(500).json({ erro: error.message });
     }
 });
 
