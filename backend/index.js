@@ -147,7 +147,7 @@ app.post('/register', createAccountLimiter, async (req, res) => {
     const { email, password, cnpj, nome_empresa, telefone, nome_usuario } = validacao.data;
 
     try {
-        console.log("--- Iniciando Registro ---");
+        console.log("--- Diagnóstico de Registro Iniciado ---");
         
         const { data: existingLoja, error: cnpjCheckError } = await supabaseService
             .from('lojas')
@@ -156,13 +156,7 @@ app.post('/register', createAccountLimiter, async (req, res) => {
             .maybeSingle();
         
         if (cnpjCheckError) throw cnpjCheckError;
-        if (existingLoja) return res.status(409).json({ erro: "Este CNPJ já está cadastrado em nossa base." });
-
-        const { data: listData, error: listError } = await supabaseService.auth.admin.listUsers();
-        if (listError) throw listError;
-        
-        const emailExists = listData.users.some(u => u.email.toLowerCase() === email.toLowerCase());
-        if (emailExists) return res.status(409).json({ erro: "Este e-mail já está em uso." });
+        if (existingLoja) return res.status(409).json({ erro: "Este CNPJ já está cadastrado." });
 
         const { data: userData, error: userError } = await supabaseService.auth.signUp({
             email, 
@@ -171,10 +165,10 @@ app.post('/register', createAccountLimiter, async (req, res) => {
         });
         
         if (userError) throw userError;
-        if (!userData.user) throw new Error("Não foi possível criar o usuário no sistema de autenticação.");
+        if (!userData.user) throw new Error("Usuário não gerado pelo Auth.");
 
-        const dataExpiracaoTeste = new Date();
-        dataExpiracaoTeste.setDate(dataExpiracaoTeste.getDate() + 30);
+        console.log("ID do Usuário Criado:", userData.user.id);
+        console.log("CNPJ que será enviado:", cnpj);
 
         const { data: lojaData, error: lojaError } = await supabaseService
             .from('lojas')
@@ -183,50 +177,32 @@ app.post('/register', createAccountLimiter, async (req, res) => {
                 owner_user_id: userData.user.id,
                 cnpj: cnpj,
                 telefone: telefone, 
-                status_assinatura: 'teste', 
-                data_fim_teste: dataExpiracaoTeste.toISOString() 
+                status_assinatura: 'teste'
             }).select('id').single();
             
         if (lojaError) {
-            console.error("Erro ao criar loja:", lojaError.message);
-            throw new Error("Erro ao criar o perfil da empresa no banco de dados.");
+            console.error("ERRO DE CONSTRAINT NO BANCO:", lojaError);
+            return res.status(500).json({ 
+                erro: "Erro de banco de dados", 
+                detalhe: lojaError.message 
+            });
         }
-
         const { error: perfilError } = await supabaseService.from('perfis').insert({
             user_id: userData.user.id,
             loja_id: lojaData.id,
             role: 'admin',
             nome_usuario
         });
-        if (perfilError) {
-            console.error("Erro ao criar perfil:", perfilError.message);
-            throw new Error("Erro ao vincular administrador à loja.");
-        }
 
-        try {
-            const insertCortinas = DEFAULT_CORTINA.map(opcao => ({ loja_id: lojaData.id, opcao }));
-            const insertToldos = DEFAULT_TOLDO.map(opcao => ({ loja_id: lojaData.id, opcao }));
-            const insertCoresCortina = DEFAULT_CORES_CORTINA.map(opcao => ({ loja_id: lojaData.id, opcao }));
-            const insertCoresToldo = DEFAULT_CORES_TOLDO.map(opcao => ({ loja_id: lojaData.id, opcao }));
+        if (perfilError) throw perfilError;
 
-            await Promise.allSettled([
-                supabaseService.from('amorim_modelos_cortina').insert(insertCortinas),
-                supabaseService.from('amorim_modelos_toldo').insert(insertToldos),
-                supabaseService.from('amorim_cores_cortina').insert(insertCoresCortina),
-                supabaseService.from('amorim_cores_toldo').insert(insertCoresToldo)
-            ]);
-        } catch (seedError) {
-            console.warn("Aviso: Falha ao inserir dados padrões, mas a conta foi criada:", seedError.message);
-        }
-
-        console.log(`✅ Registro finalizado com sucesso para: ${email}`);
-        res.status(201).json({ mensagem: "Conta criada! Verifique seu e-mail para confirmar o cadastro." });
+        res.status(201).json({ mensagem: "Conta criada com sucesso!" });
 
    } catch (error) {
-        console.error("❌ ERRO NO PROCESSO DE REGISTRO:", error.message);
-        res.status(500).json({ erro: error.message || "Erro interno ao processar cadastro." });
+        console.error("❌ ERRO GERAL:", error);
+        res.status(500).json({ erro: error.message });
     }
-}); 
+});
 
 app.post('/correction-email', async (req, res, next) => {
     const { oldEmail, newEmail } = req.body;
