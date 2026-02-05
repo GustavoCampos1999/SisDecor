@@ -148,15 +148,20 @@ app.post('/register', createAccountLimiter, async (req, res, next) => {
     try {
         const { data: existingLoja } = await supabaseService.from('lojas').select('id').eq('cnpj', cnpj).maybeSingle();
         if (existingLoja) return res.status(409).json({ erro: "CNPJ já cadastrado." });
-
         const { data: userData, error: userError } = await supabaseService.auth.signUp({
             email, 
             password,
-            options: { data: { nome_usuario } }
+            options: { 
+                data: { 
+                    nome_usuario,
+                    telefone 
+                } 
+            }
         });
         
         if (userError) throw userError;
         if (!userData.user) throw new Error("Erro ao criar usuário.");
+        const dataExpiracaoTeste = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
 
         const { data: lojaData, error: lojaError } = await supabaseService
             .from('lojas')
@@ -164,20 +169,18 @@ app.post('/register', createAccountLimiter, async (req, res, next) => {
                 nome: nome_empresa,
                 owner_user_id: userData.user.id,
                 cnpj: cnpj,
-                telefone: telefone,
+                telefone: telefone, 
                 status_assinatura: 'teste', 
-                data_fim_teste: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) 
+                data_fim_teste: dataExpiracaoTeste 
             }).select('id').single();
             
         if (lojaError) throw lojaError;
-
         await supabaseService.from('perfis').insert({
             user_id: userData.user.id,
             loja_id: lojaData.id,
             role: 'admin',
             nome_usuario
         });
-
         const insertCortinas = DEFAULT_CORTINA.map(opcao => ({ loja_id: lojaData.id, opcao }));
         const insertToldos = DEFAULT_TOLDO.map(opcao => ({ loja_id: lojaData.id, opcao }));
         const insertCoresCortina = DEFAULT_CORES_CORTINA.map(opcao => ({ loja_id: lojaData.id, opcao }));
@@ -189,6 +192,7 @@ app.post('/register', createAccountLimiter, async (req, res, next) => {
             supabaseService.from('amorim_cores_cortina').insert(insertCoresCortina),
             supabaseService.from('amorim_cores_toldo').insert(insertCoresToldo)
         ]);
+
         res.status(201).json({ mensagem: "Conta criada!" });
     } catch (error) {
         next(error);
