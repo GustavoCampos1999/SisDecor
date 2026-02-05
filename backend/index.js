@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const axios = require('axios');
 const helmet = require('helmet'); 
 const morgan = require('morgan'); 
 const { z } = require('zod');     
@@ -9,8 +8,10 @@ const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const { calcularOrcamento } = require('./calculo.js');
 const db = require('./database.js'); 
+
 const app = express();
 app.set('trust proxy', 1);
+
 const allowedOrigins = [
   'https://gustavocampos1999.github.io', 
   'http://127.0.0.1:5500',
@@ -89,10 +90,10 @@ const teamAddSchema = z.object({
     role_id: z.number().nullable().optional()
 });
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = (req, _res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ erro: "Token necessário." });
+    return _res.status(401).json({ erro: "Token necessário." });
   }
   const token = authHeader.split(' ')[1];
   req.supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -124,7 +125,7 @@ const requireAdmin = async (req, res, next) => {
     }
 };
 
-app.get('/health', (req, res) => res.status(200).send('Online.'));
+app.get('/health', (_req, res) => res.status(200).send('Online.'));
 
 app.post('/api/check-email', async (req, res, next) => {
     try {
@@ -137,7 +138,7 @@ app.post('/api/check-email', async (req, res, next) => {
     }
 });
 
-app.post('/register', createAccountLimiter, async (req, res, next) => {
+app.post('/register', createAccountLimiter, async (req, res) => {
     const validacao = registerSchema.safeParse(req.body);
     if (!validacao.success) {
         return res.status(400).json({ erro: validacao.error.issues[0].message });
@@ -147,7 +148,7 @@ app.post('/register', createAccountLimiter, async (req, res, next) => {
 
     try {
         console.log("--- Iniciando Registro ---");
-        console.log("1. Verificando CNPJ...");
+        
         const { data: existingLoja, error: cnpjCheckError } = await supabaseService
             .from('lojas')
             .select('id')
@@ -157,19 +158,12 @@ app.post('/register', createAccountLimiter, async (req, res, next) => {
         if (cnpjCheckError) throw cnpjCheckError;
         if (existingLoja) return res.status(409).json({ erro: "Este CNPJ já está cadastrado em nossa base." });
 
-        console.log("2. Verificando E-mail via Admin Auth...");
-        try {
-            const { data: listData, error: listError } = await supabaseService.auth.admin.listUsers();
-            if (listError) throw listError;
-            
-            const emailExists = listData.users.some(u => u.email.toLowerCase() === email.toLowerCase());
-            if (emailExists) return res.status(409).json({ erro: "Este e-mail já está em uso." });
-        } catch (adminError) {
-            console.error("Erro na Service Key (listUsers):", adminError.message);
-            return res.status(500).json({ erro: "Erro de configuração no servidor (Chave Admin)." });
-        }
+        const { data: listData, error: listError } = await supabaseService.auth.admin.listUsers();
+        if (listError) throw listError;
+        
+        const emailExists = listData.users.some(u => u.email.toLowerCase() === email.toLowerCase());
+        if (emailExists) return res.status(409).json({ erro: "Este e-mail já está em uso." });
 
-        console.log("3. Criando usuário no Supabase Auth...");
         const { data: userData, error: userError } = await supabaseService.auth.signUp({
             email, 
             password,
@@ -177,9 +171,8 @@ app.post('/register', createAccountLimiter, async (req, res, next) => {
         });
         
         if (userError) throw userError;
-        if (!userData.user) throw new Error("Não foi possível criar o usuário.");
+        if (!userData.user) throw new Error("Não foi possível criar o usuário no sistema de autenticação.");
 
-        console.log("4. Criando registro da Loja...");
         const dataExpiracaoTeste = new Date();
         dataExpiracaoTeste.setDate(dataExpiracaoTeste.getDate() + 30);
 
@@ -195,44 +188,46 @@ app.post('/register', createAccountLimiter, async (req, res, next) => {
             }).select('id').single();
             
         if (lojaError) {
-            console.error("Erro ao criar loja:", lojaError);
-            throw lojaError;
+            console.error("Erro ao criar loja:", lojaError.message);
+            throw new Error("Erro ao criar o perfil da empresa no banco de dados.");
         }
 
-        console.log("5. Criando perfil administrativo...");
         const { error: perfilError } = await supabaseService.from('perfis').insert({
             user_id: userData.user.id,
             loja_id: lojaData.id,
             role: 'admin',
             nome_usuario
         });
-        if (perfilError) throw perfilError;
+        if (perfilError) {
+            console.error("Erro ao criar perfil:", perfilError.message);
+            throw new Error("Erro ao vincular administrador à loja.");
+        }
 
-        console.log("6. Inserindo dados de configuração padrão...");
         try {
             const insertCortinas = DEFAULT_CORTINA.map(opcao => ({ loja_id: lojaData.id, opcao }));
             const insertToldos = DEFAULT_TOLDO.map(opcao => ({ loja_id: lojaData.id, opcao }));
             const insertCoresCortina = DEFAULT_CORES_CORTINA.map(opcao => ({ loja_id: lojaData.id, opcao }));
             const insertCoresToldo = DEFAULT_CORES_TOLDO.map(opcao => ({ loja_id: lojaData.id, opcao }));
 
-            await Promise.all([
+            await Promise.allSettled([
                 supabaseService.from('amorim_modelos_cortina').insert(insertCortinas),
                 supabaseService.from('amorim_modelos_toldo').insert(insertToldos),
                 supabaseService.from('amorim_cores_cortina').insert(insertCoresCortina),
                 supabaseService.from('amorim_cores_toldo').insert(insertCoresToldo)
             ]);
         } catch (seedError) {
-            console.warn("Aviso: Falha ao inserir dados padrões (verifique se as tabelas existem):", seedError.message);
+            console.warn("Aviso: Falha ao inserir dados padrões, mas a conta foi criada:", seedError.message);
         }
 
-        console.log(`✅ Registro finalizado: ${email}`);
-        res.status(201).json({ mensagem: "Conta criada! Verifique seu e-mail." });
+        console.log(`✅ Registro finalizado com sucesso para: ${email}`);
+        res.status(201).json({ mensagem: "Conta criada! Verifique seu e-mail para confirmar o cadastro." });
 
-    } catch (error) {
+   } catch (error) {
         console.error("❌ ERRO NO PROCESSO DE REGISTRO:", error.message);
-        next(error);
+        res.status(500).json({ erro: error.message || "Erro interno ao processar cadastro." });
     }
-});
+}); 
+
 app.post('/correction-email', async (req, res, next) => {
     const { oldEmail, newEmail } = req.body;
     try {
@@ -252,14 +247,15 @@ app.post('/correction-email', async (req, res, next) => {
         next(error);
     }
 });
+
 app.use('/api', authMiddleware);
 
-app.post('/api/calcular', (req, res, next) => {
+app.post('/api/calcular', (req, res, _next) => {
    try {
     const resultados = calcularOrcamento(req.body);
     res.json(resultados);
    } catch (error) {
-    next(error);
+    _next(error);
    }
 });
 
@@ -557,7 +553,7 @@ app.post('/api/config/taxas', async (req, res, next) => {
     }
 });
 
-const globalErrorHandler = (err, req, res, next) => {
+const globalErrorHandler = (err, _req, res, _next) => {
     console.error("🔴 ERRO CRÍTICO NO SERVIDOR:", err);
 
     const statusCode = err.statusCode || 500;
