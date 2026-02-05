@@ -146,6 +146,8 @@ app.post('/register', createAccountLimiter, async (req, res, next) => {
     const { email, password, cnpj, nome_empresa, telefone, nome_usuario } = validacao.data;
 
     try {
+        console.log("--- Iniciando Registro ---");
+        console.log("1. Verificando CNPJ...");
         const { data: existingLoja, error: cnpjCheckError } = await supabaseService
             .from('lojas')
             .select('id')
@@ -155,26 +157,29 @@ app.post('/register', createAccountLimiter, async (req, res, next) => {
         if (cnpjCheckError) throw cnpjCheckError;
         if (existingLoja) return res.status(409).json({ erro: "Este CNPJ já está cadastrado em nossa base." });
 
-        const { data: { users }, error: listError } = await supabaseService.auth.admin.listUsers();
-        if (listError) throw listError;
-        
-        const emailExists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
-        if (emailExists) return res.status(409).json({ erro: "Este e-mail já está em uso." });
+        console.log("2. Verificando E-mail via Admin Auth...");
+        try {
+            const { data: listData, error: listError } = await supabaseService.auth.admin.listUsers();
+            if (listError) throw listError;
+            
+            const emailExists = listData.users.some(u => u.email.toLowerCase() === email.toLowerCase());
+            if (emailExists) return res.status(409).json({ erro: "Este e-mail já está em uso." });
+        } catch (adminError) {
+            console.error("Erro na Service Key (listUsers):", adminError.message);
+            return res.status(500).json({ erro: "Erro de configuração no servidor (Chave Admin)." });
+        }
 
+        console.log("3. Criando usuário no Supabase Auth...");
         const { data: userData, error: userError } = await supabaseService.auth.signUp({
             email, 
             password,
-            options: { 
-                data: { 
-                    nome_usuario,
-                    telefone 
-                } 
-            }
+            options: { data: { nome_usuario, telefone } }
         });
         
         if (userError) throw userError;
-        if (!userData.user) throw new Error("Não foi possível criar as credenciais de acesso.");
+        if (!userData.user) throw new Error("Não foi possível criar o usuário.");
 
+        console.log("4. Criando registro da Loja...");
         const dataExpiracaoTeste = new Date();
         dataExpiracaoTeste.setDate(dataExpiracaoTeste.getDate() + 30);
 
@@ -189,8 +194,12 @@ app.post('/register', createAccountLimiter, async (req, res, next) => {
                 data_fim_teste: dataExpiracaoTeste.toISOString() 
             }).select('id').single();
             
-        if (lojaError) throw lojaError;
+        if (lojaError) {
+            console.error("Erro ao criar loja:", lojaError);
+            throw lojaError;
+        }
 
+        console.log("5. Criando perfil administrativo...");
         const { error: perfilError } = await supabaseService.from('perfis').insert({
             user_id: userData.user.id,
             loja_id: lojaData.id,
@@ -198,27 +207,32 @@ app.post('/register', createAccountLimiter, async (req, res, next) => {
             nome_usuario
         });
         if (perfilError) throw perfilError;
-        const insertCortinas = DEFAULT_CORTINA.map(opcao => ({ loja_id: lojaData.id, opcao }));
-        const insertToldos = DEFAULT_TOLDO.map(opcao => ({ loja_id: lojaData.id, opcao }));
-        const insertCoresCortina = DEFAULT_CORES_CORTINA.map(opcao => ({ loja_id: lojaData.id, opcao }));
-        const insertCoresToldo = DEFAULT_CORES_TOLDO.map(opcao => ({ loja_id: lojaData.id, opcao }));
 
-        await Promise.all([
-            supabaseService.from('amorim_modelos_cortina').insert(insertCortinas),
-            supabaseService.from('amorim_modelos_toldo').insert(insertToldos),
-            supabaseService.from('amorim_cores_cortina').insert(insertCoresCortina),
-            supabaseService.from('amorim_cores_toldo').insert(insertCoresToldo)
-        ]);
+        console.log("6. Inserindo dados de configuração padrão...");
+        try {
+            const insertCortinas = DEFAULT_CORTINA.map(opcao => ({ loja_id: lojaData.id, opcao }));
+            const insertToldos = DEFAULT_TOLDO.map(opcao => ({ loja_id: lojaData.id, opcao }));
+            const insertCoresCortina = DEFAULT_CORES_CORTINA.map(opcao => ({ loja_id: lojaData.id, opcao }));
+            const insertCoresToldo = DEFAULT_CORES_TOLDO.map(opcao => ({ loja_id: lojaData.id, opcao }));
 
-        console.log(`✅ Nova conta criada com sucesso: ${email}`);
-        res.status(201).json({ mensagem: "Conta criada com sucesso! Verifique seu e-mail." });
+            await Promise.all([
+                supabaseService.from('amorim_modelos_cortina').insert(insertCortinas),
+                supabaseService.from('amorim_modelos_toldo').insert(insertToldos),
+                supabaseService.from('amorim_cores_cortina').insert(insertCoresCortina),
+                supabaseService.from('amorim_cores_toldo').insert(insertCoresToldo)
+            ]);
+        } catch (seedError) {
+            console.warn("Aviso: Falha ao inserir dados padrões (verifique se as tabelas existem):", seedError.message);
+        }
+
+        console.log(`✅ Registro finalizado: ${email}`);
+        res.status(201).json({ mensagem: "Conta criada! Verifique seu e-mail." });
 
     } catch (error) {
-        console.error("❌ Erro detalhado no registro:", error); 
+        console.error("❌ ERRO NO PROCESSO DE REGISTRO:", error.message);
         next(error);
     }
 });
-
 app.post('/correction-email', async (req, res, next) => {
     const { oldEmail, newEmail } = req.body;
     try {
@@ -547,7 +561,7 @@ const globalErrorHandler = (err, req, res, next) => {
     console.error("🔴 ERRO CRÍTICO NO SERVIDOR:", err);
 
     const statusCode = err.statusCode || 500;
-    const message = "Ocorreu um erro interno no servidor. Tente novamente mais tarde.";
+    const message = err.message || "Ocorreu um erro interno no servidor.";
 
     res.status(statusCode).json({
         erro: message,
