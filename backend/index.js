@@ -165,9 +165,10 @@ app.post('/register', createAccountLimiter, async (req, res, next) => {
                 owner_user_id: userData.user.id,
                 cnpj: cnpj,
                 telefone: telefone,
-                subscription_status: 'trialing',
-                trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                status_assinatura: 'teste', 
+                data_fim_teste: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) 
             }).select('id').single();
+            
         if (lojaError) throw lojaError;
 
         await supabaseService.from('perfis').insert({
