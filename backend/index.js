@@ -271,7 +271,7 @@ app.get('/api/team', async (req, res, next) => {
 app.post('/api/pagamentos/checkout', async (req, res) => {
     const { plano, loja_id } = req.body;
     const PAGSEGURO_TOKEN = process.env.PAGSEGURO_TOKEN;
-    const PAGSEGURO_API_URL = 'https://sandbox.api.pagseguro.com'; 
+    const PAGSEGURO_API_URL = 'https://api.pagseguro.com';
     const planoNormalizado = String(plano).trim().toLowerCase();
 
     const planos = {
@@ -291,8 +291,8 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
         const payload = {
             reference_id: loja_id,
             customer: {
-                name: "Usuario SisDecor",
-                email: "test@sandbox.pagseguro.com.br"
+                name: req.body.nome_cliente || "Cliente SisDecor",
+                email: req.body.email_cliente || "cliente@email.com" 
             },
             items: [{
                 reference_id: planoNormalizado,

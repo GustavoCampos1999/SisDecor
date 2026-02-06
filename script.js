@@ -156,7 +156,6 @@ async function buscarDadosBaseDoBackend() {
     calculatorDataRefs.amorim_cores_cortina = amorimCorCortina;
     calculatorDataRefs.amorim_modelos_toldo = amorimModToldo;
     calculatorDataRefs.amorim_cores_toldo = amorimCorToldo;
-
     calculatorDataRefs.frete = (dadosApi.frete || []).reduce((acc, item) => {
         const valor = item.valor || 0;
         const key = (item.opcao && item.opcao.trim() !== '') ? `${item.opcao}` : `R$ ${valor.toFixed(2).replace('.', ',')}`;
@@ -573,13 +572,24 @@ export function setupPagamentoBotoes(lojaId) {
                 const { data: { session } } = await _supabase.auth.getSession();
                 const token = session?.access_token;
 
+                const { data: perfilData } = await _supabase
+                    .from('perfis')
+                    .select('nome_usuario')
+                    .eq('user_id', session.user.id)
+                    .maybeSingle();
+
                 const response = await fetch(`${BACKEND_API_URL}/api/pagamentos/checkout`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}` 
                     },
-                    body: JSON.stringify({ plano: planoRaw, loja_id: lojaId })
+                    body: JSON.stringify({ 
+                        plano: planoRaw, 
+                        loja_id: lojaId,
+                        nome_cliente: perfilData?.nome_usuario || "Cliente SisDecor",
+                        email_cliente: session.user.email 
+                    })
                 });
 
                 const data = await response.json();
