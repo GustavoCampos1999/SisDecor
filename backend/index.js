@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const { calcularOrcamento } = require('./calculo.js');
 const db = require('./database.js'); 
+const axios = require('axios'); 
 
 const app = express();
 app.set('trust proxy', 1);
@@ -53,7 +54,7 @@ const apiLimiter = rateLimit({
 	max: 100, 
     message: { erro: "Muitos pedidos. Tente mais tarde." }
 });
-app.use('/api', apiLimiter);
+
 
 const PORTA = process.env.PORT || 3000;
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -207,27 +208,95 @@ app.post('/register', createAccountLimiter, async (req, res) => {
     }
 });
 
-app.post('/correction-email', async (req, res, next) => {
-    const { oldEmail, newEmail } = req.body;
-    try {
-        const { data: { users }, error: findError } = await supabaseService.auth.admin.listUsers();
-        if (findError) throw findError;
+app.post('/api/pagamentos/webhook', async (req, res) => {
+    const { reference_id, status, items } = req.body;
 
-        const user = users.find(u => u.email === oldEmail);
-        if (!user) return res.status(404).json({ erro: "Usuário não encontrado." });
-        if (user.email_confirmed_at) return res.status(400).json({ erro: "Este usuário já está verificado." });
-        
-        const { error: updateError } = await supabaseService.auth.admin.updateUserById(
-            user.id, { email: newEmail } 
-        );
-        if (updateError) throw updateError;
-        res.json({ success: true });
+    try {
+        if (status === 'PAID' || status === 'AVAILABLE') {
+            const lojaId = reference_id;
+            const planoKey = items[0].reference_id;
+            const dias = planoKey === 'mensal' ? 30 : (planoKey === 'semestral' ? 180 : 365);
+            
+            const { data: perfil } = await supabaseService
+                .from('perfis')
+                .select('data_expiracao_assinatura')
+                .eq('loja_id', lojaId)
+                .single();
+            
+            let dataBase = new Date();
+            if (perfil?.data_expiracao_assinatura && new Date(perfil.data_expiracao_assinatura) > new Date()) {
+                dataBase = new Date(perfil.data_expiracao_assinatura);
+            }
+            
+            dataBase.setDate(dataBase.getDate() + dias);
+
+            await supabaseService
+                .from('perfis')
+                .update({ 
+                    data_expiracao_assinatura: dataBase.toISOString(),
+                    status_assinatura: 'ativo' 
+                })
+                .eq('loja_id', lojaId);
+
+            console.log(`✅ Webhook: Loja ${lojaId} renovada por ${dias} dias.`);
+        }
+        res.sendStatus(200);
     } catch (error) {
-        next(error);
+        console.error("Erro no Webhook PagBank:", error);
+        res.sendStatus(500);
     }
 });
 
+app.use('/api', apiLimiter);
 app.use('/api', authMiddleware);
+
+app.post('/api/pagamentos/checkout', async (req, res) => {
+    const { plano, loja_id } = req.body;
+    const PAGSEGURO_TOKEN = process.env.PAGSEGURO_TOKEN;
+    const PAGSEGURO_API_URL = 'https://sandbox.api.pagseguro.com'; 
+
+    const planos = {
+        'mensal': { nome: 'Assinatura SisDecor - Mensal', valor: 3990 }, 
+        'semestral': { nome: 'Assinatura SisDecor - Semestral', valor: 23890 }, 
+        'anual': { nome: 'Assinatura SisDecor - Anual', valor: 35890 } 
+    };
+
+    const item = planos[plano];
+    if (!item) return res.status(400).json({ erro: "Plano inválido" });
+
+    try {
+        const payload = {
+            reference_id: loja_id,
+            customer: {
+                name: "Usuario SisDecor",
+                email: "test@sandbox.pagseguro.com.br"
+            },
+            items: [{
+                reference_id: plano,
+                name: item.nome,
+                quantity: 1,
+                unit_amount: item.valor
+            }],
+            notification_urls: ["https://painel-de-controle-gcv.onrender.com/api/pagamentos/webhook"],
+            payment_methods: [{ type: "CREDIT_CARD" }, { type: "BOLETO" }, { type: "PIX" }],
+            redirect_url: "https://sisdecor.com.br/painel"
+        };
+
+        const response = await axios.post(`${PAGSEGURO_API_URL}/checkouts`, payload, {
+            headers: {
+                'Authorization': `Bearer ${PAGSEGURO_TOKEN}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const checkoutLink = response.data.links.find(link => link.rel === 'PAY');
+        res.json({ url: checkoutLink.href });
+
+    } catch (error) {
+        console.error("Erro PagBank Checkout:", error.response?.data || error.message);
+        res.status(500).json({ erro: "Falha na comunicação com PagBank." });
+    }
+});
 
 app.post('/api/calcular', (req, res, _next) => {
    try {
@@ -299,70 +368,6 @@ app.get('/api/roles', async (req, res, next) => {
     }
 });
 
-app.post('/api/roles', async (req, res, next) => {
-    const { id, nome, permissions } = req.body;
-    try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
-        const { data: perfil } = await supabaseService.from('perfis').select('loja_id, role').eq('user_id', user.id).single();
-
-        if (perfil.role !== 'admin') return res.status(403).json({ erro: "Sem permissão." });
-
-        const dados = { loja_id: perfil.loja_id, nome, permissions };
-        const query = id ? supabaseService.from('loja_roles').update(dados).eq('id', id) : supabaseService.from('loja_roles').insert(dados);
-        const { data, error } = await query.select().single();
-        
-        if (error) throw error;
-        res.json(data);
-    } catch (error) {
-        next(error);
-    }
-});
-
-app.delete('/api/roles/:id', async (req, res, next) => {
-    try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
-        const { data: perfil } = await supabaseService.from('perfis').select('loja_id, role').eq('user_id', user.id).single();
-        if (perfil.role !== 'admin') return res.status(403).json({ erro: "Sem permissão." });
-
-        await supabaseService.from('loja_roles').delete().match({ id: req.params.id, loja_id: perfil.loja_id });
-        res.json({ success: true });
-    } catch (error) {
-        next(error);
-    }
-});
-
-app.get('/api/team', async (req, res, next) => {
-    try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
-        const { data: perfil } = await supabaseService.from('perfis').select('loja_id').eq('user_id', user.id).single();
-        
-        if (!perfil) return res.status(403).json({ erro: "Perfil não encontrado" });
-
-        const { data: equipe } = await supabaseService
-            .from('perfis')
-            .select('user_id, nome_usuario, role, role_id')
-            .eq('loja_id', perfil.loja_id);
-        
-        const { data: roles } = await supabaseService.from('loja_roles').select('id, nome').eq('loja_id', perfil.loja_id);
-        const { data: { users: authUsers } } = await supabaseService.auth.admin.listUsers();
-
-        const equipeFinal = equipe.map(membro => {
-            const roleCustom = roles.find(r => r.id === membro.role_id);
-            const authUser = authUsers.find(u => u.id === membro.user_id);
-            
-            return { 
-                ...membro, 
-                role_custom_name: roleCustom ? roleCustom.nome : null,
-                email: authUser ? authUser.email : 'Email não encontrado' 
-            };
-        });
-
-        res.json(equipeFinal);
-    } catch (error) {
-        next(error);
-    }
-});
-
 app.post('/api/team/add', createAccountLimiter, requireAdmin, async (req, res, next) => {
     const validacao = teamAddSchema.safeParse(req.body);
     if (!validacao.success) {
@@ -396,73 +401,6 @@ app.post('/api/team/add', createAccountLimiter, requireAdmin, async (req, res, n
         });
 
         res.status(201).json({ mensagem: "Usuário criado com sucesso." });
-    } catch (error) {
-        next(error);
-    }
-});
-
-app.put('/api/team/:id', requireAdmin, async (req, res, next) => {
-    const userIdAlvo = req.params.id;
-    const { nome, email, senha, role_id } = req.body; 
-    const perfilAdmin = req.adminPerfil; 
-
-    try {
-        const { data: perfilAlvo } = await supabaseService
-            .from('perfis')
-            .select('loja_id')
-            .eq('user_id', userIdAlvo)
-            .single();
-
-        if (!perfilAlvo || perfilAlvo.loja_id !== perfilAdmin.loja_id) {
-            return res.status(403).json({ erro: "Usuário inválido ou de outra loja." });
-        }
-
-        const authUpdates = {};
-        if (senha && senha.length >= 6) authUpdates.password = senha;
-        if (email) authUpdates.email = email; 
-
-        if (Object.keys(authUpdates).length > 0) {
-            const { error: authErr } = await supabaseService.auth.admin.updateUserById(userIdAlvo, authUpdates);
-            if (authErr) throw authErr;
-        }
-
-        let updates = { nome_usuario: nome };
-        if (role_id) {
-            updates.role_id = role_id;
-            const { data: r } = await supabaseService.from('loja_roles').select('nome').eq('id', role_id).single();
-            if (r) updates.role = r.nome;
-        } else if (role_id === null) { 
-             updates.role_id = null;
-             updates.role = 'vendedor';
-        }
-
-        await supabaseService.from('perfis').update(updates).eq('user_id', userIdAlvo);
-        res.json({ mensagem: "Usuário atualizado." });
-    } catch (error) {
-        next(error);
-    }
-});
-
-app.delete('/api/team/:id', requireAdmin, async (req, res, next) => {
-    try {
-        const userId = req.params.id;
-        const perfilAdmin = req.adminPerfil; 
-        
-        const { data: { user } } = await req.supabase.auth.getUser(); 
-        if (userId === user.id) return res.status(400).json({ erro: "Não pode excluir a si mesmo." });
-        
-        const { data: alvo } = await supabaseService
-            .from('perfis')
-            .select('loja_id')
-            .eq('user_id', userId)
-            .single();
-
-        if (!alvo || alvo.loja_id !== perfilAdmin.loja_id) {
-            return res.status(403).json({ erro: "Usuário inválido." });
-        }
-
-        await supabaseService.auth.admin.deleteUser(userId);
-        res.json({ mensagem: "Removido." });
     } catch (error) {
         next(error);
     }

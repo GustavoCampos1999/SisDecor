@@ -313,9 +313,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     initTeamManager(elements);
     await checkUserSession();
     await loadPermissions();
+
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (session) {
+        const { data: perfil } = await _supabase
+            .from('perfis')
+            .select('loja_id')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+
+        if (perfil && perfil.loja_id) {
+            setupPagamentoBotoes(perfil.loja_id);
+        }
+    }
+
     initRealtime();
     setupLogoutButton();
     initUI(elements);
+
     if (elements.btnThemeToggle) {
         const body = document.body;
         const applyTheme = (theme) => {
@@ -393,6 +408,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             itemParaExcluirGenericoInfo = null;
         });
     }
+
     window.prepararExclusaoGenerica = (info) => {
         itemParaExcluirGenericoInfo = info; 
         if (elements.spanItemNomeExcluir) {
@@ -534,4 +550,40 @@ function setupTableSorting(tableId, dataArray, renderFunction) {
         }
         sortAndRender();
      }
+}
+
+export function setupPagamentoBotoes(lojaId) {
+    const botoes = document.querySelectorAll('.btn-pagseguro');
+
+    botoes.forEach(btn => {
+        btn.onclick = async () => {
+            const plano = btn.getAttribute('data-plan'); 
+            const originalText = btn.textContent;
+            
+            try {
+                btn.disabled = true;
+                btn.textContent = 'Processando...';
+
+                const response = await fetch(`${BACKEND_API_URL}/api/pagamentos/checkout`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plano, loja_id: lojaId })
+                });
+
+                const data = await response.json();
+
+                if (data.url) {
+                    window.location.href = data.url;    
+                } else {
+                    alert('Erro ao iniciar pagamento. Tente novamente.');
+                }
+            } catch (error) {
+                console.error("Erro no checkout:", error);
+                alert('Erro de conexão com o servidor.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        };
+    });
 }
