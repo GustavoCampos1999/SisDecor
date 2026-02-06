@@ -254,15 +254,19 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
     const { plano, loja_id } = req.body;
     const PAGSEGURO_TOKEN = process.env.PAGSEGURO_TOKEN;
     const PAGSEGURO_API_URL = 'https://sandbox.api.pagseguro.com'; 
+    const planoNormalizado = String(plano).trim().toLowerCase();
 
     const planos = {
-        'mensal': { nome: 'Assinatura SisDecor - Mensal', valor: 3990 }, 
-        'semestral': { nome: 'Assinatura SisDecor - Semestral', valor: 23890 }, 
-        'anual': { nome: 'Assinatura SisDecor - Anual', valor: 35890 } 
+        'mensal': { nome: 'Assinatura SisDecor - Mensal', valor: 3990 },
+        'semestral': { nome: 'Assinatura SisDecor - Semestral', valor: 23890 },
+        'anual': { nome: 'Assinatura SisDecor - Anual', valor: 35890 }
     };
 
-    const item = planos[plano];
-    if (!item) return res.status(400).json({ erro: "Plano inválido" });
+    const item = planos[planoNormalizado];
+
+    if (!item) {
+        return res.status(400).json({ erro: `Plano inválido: ${plano}` });
+    }
 
     try {
         const payload = {
@@ -272,7 +276,7 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
                 email: "test@sandbox.pagseguro.com.br"
             },
             items: [{
-                reference_id: plano,
+                reference_id: planoNormalizado,
                 name: item.nome,
                 quantity: 1,
                 unit_amount: item.valor

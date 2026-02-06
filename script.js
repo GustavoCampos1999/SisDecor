@@ -557,28 +557,41 @@ export function setupPagamentoBotoes(lojaId) {
 
     botoes.forEach(btn => {
         btn.onclick = async () => {
-            const plano = btn.getAttribute('data-plan'); 
+            const planoRaw = btn.getAttribute('data-plan'); 
+        
+            if (!planoRaw) {
+                console.error("Atributo data-plan ausente no botão");
+                return;
+            }
+
             const originalText = btn.textContent;
             
             try {
                 btn.disabled = true;
                 btn.textContent = 'Processando...';
 
+                const { data: { session } } = await _supabase.auth.getSession();
+                const token = session?.access_token;
+
                 const response = await fetch(`${BACKEND_API_URL}/api/pagamentos/checkout`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ plano, loja_id: lojaId })
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ plano: planoRaw, loja_id: lojaId })
                 });
 
                 const data = await response.json();
 
-                if (data.url) {
+                if (response.ok && data.url) {
                     window.location.href = data.url;    
                 } else {
-                    alert('Erro ao iniciar pagamento. Tente novamente.');
+                    console.error("Erro do servidor:", data);
+                    alert('Erro: ' + (data.erro || 'Tente novamente.'));
                 }
             } catch (error) {
-                console.error("Erro no checkout:", error);
+                console.error("Erro de conexão:", error);
                 alert('Erro de conexão com o servidor.');
             } finally {
                 btn.disabled = false;
