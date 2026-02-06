@@ -215,7 +215,7 @@ app.post('/api/pagamentos/webhook', async (req, res) => {
         if (status === 'PAID' || status === 'AVAILABLE') {
             const lojaId = reference_id;
             const planoKey = items[0].reference_id;
-            const dias = planoKey === 'mensal' ? 30 : (planoKey === 'semestral' ? 180 : 365);
+           const dias = planoKey === 'mensal' ? 30 : (planoKey === 'trimestral' ? 90 : (planoKey === 'semestral' ? 180 : 365));
             
             const { data: perfil } = await supabaseService
                 .from('perfis')
@@ -250,6 +250,24 @@ app.post('/api/pagamentos/webhook', async (req, res) => {
 app.use('/api', apiLimiter);
 app.use('/api', authMiddleware);
 
+app.get('/api/team', async (req, res, next) => {
+    try {
+        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
+        const { data: perfil } = await supabaseService.from('perfis').select('loja_id').eq('user_id', user.id).single();
+        
+        if (!perfil) return res.status(403).json({ erro: "Perfil não encontrado" });
+
+        const { data: equipe } = await supabaseService
+            .from('perfis')
+            .select('user_id, nome_usuario, role, role_id')
+            .eq('loja_id', perfil.loja_id);
+        
+        res.json(equipe || []);
+    } catch (error) {
+        next(error);
+    }
+});
+
 app.post('/api/pagamentos/checkout', async (req, res) => {
     const { plano, loja_id } = req.body;
     const PAGSEGURO_TOKEN = process.env.PAGSEGURO_TOKEN;
@@ -258,6 +276,7 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
 
     const planos = {
         'mensal': { nome: 'Assinatura SisDecor - Mensal', valor: 3990 },
+        'trimestral': { nome: 'Assinatura SisDecor - Trimestral', valor: 11970 }, 
         'semestral': { nome: 'Assinatura SisDecor - Semestral', valor: 23890 },
         'anual': { nome: 'Assinatura SisDecor - Anual', valor: 35890 }
     };
