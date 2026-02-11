@@ -596,12 +596,14 @@ export function setupPagamentoBotoes(lojaId) {
                     if (data.error_messages && data.error_messages.length > 0) {
                         const mainError = data.error_messages[0];
                         alert(`Erro PagBank: ${mainError.description}`);
-                        
-                        if (mainError.error === 'allowlist_access_required') {
-                            console.warn("Ação necessária: Solicitar liberação no suporte do PagSeguro.");
-                        }
+                    } else if (data.erro) {
+                        alert(`Erro no Servidor: ${data.erro}`);
                     } else {
-                        alert('Erro: ' + (data.erro || 'Erro ao processar checkout. Tente novamente.'));
+                        alert('Erro inesperado ao processar o checkout.');
+                    }
+                    
+                    if (JSON.stringify(data).includes('allowlist_access_required')) {
+                        console.warn("⚠️ Bloqueio de Segurança: Seu domínio/conta precisa de liberação no PagBank.");
                     }
                 }
             } catch (error) {
