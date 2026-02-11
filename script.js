@@ -557,12 +557,6 @@ export function setupPagamentoBotoes(lojaId) {
     botoes.forEach(btn => {
         btn.onclick = async () => {
             const planoRaw = btn.getAttribute('data-plan'); 
-        
-            if (!planoRaw) {
-                console.error("Atributo data-plan ausente no botão");
-                return;
-            }
-
             const originalText = btn.textContent;
             
             try {
@@ -595,9 +589,17 @@ export function setupPagamentoBotoes(lojaId) {
                 const data = await response.json();
 
                 if (response.ok && data.url) {
-                    window.location.href = data.url;    
+                    window.open(data.url, '_blank');    
                 } else {
-                    console.error("Erro do servidor:", data);
+                    console.log("Erro retornado pelo PagBank:", error);
+if (error.error_messages && error.error_messages.length > 0) {
+    const mainError = error.error_messages[0];
+    alert(`Erro PagBank: ${mainError.description} (Código: ${mainError.error})`);
+    
+    if (mainError.error === 'allowlist_access_required') {
+        console.warn("Ação necessária: Solicitar liberação do domínio/conta no suporte do PagSeguro.");
+    }
+}
                     alert('Erro: ' + (data.erro || 'Tente novamente.'));
                 }
             } catch (error) {
