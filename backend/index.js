@@ -289,7 +289,7 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
 
     try {
         const payload = {
-            reference_id: loja_id,
+            reference_id: String(loja_id),
             customer: {
                 name: req.body.nome_cliente || "Cliente SisDecor",
                 email: req.body.email_cliente || "cliente@email.com" 
