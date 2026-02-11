@@ -270,7 +270,7 @@ app.get('/api/team', async (req, res, next) => {
 
 app.post('/api/pagamentos/checkout', async (req, res) => {
     const { plano, loja_id } = req.body;
-    const PAGSEGURO_TOKEN = process.env.PAGSEGURO_TOKEN;
+    const PAGSEGURO_TOKEN = process.env.PAGBANK_TOKEN; 
     const PAGSEGURO_API_URL = 'https://api.pagseguro.com';
     const planoNormalizado = String(plano).trim().toLowerCase();
 
@@ -316,8 +316,14 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
         res.json({ url: checkoutLink.href });
 
     } catch (error) {
-        console.error("Erro PagBank Checkout:", error.response?.data || error.message);
-        res.status(500).json({ erro: "Falha na comunicação com PagBank." });
+        const pagbankError = error.response?.data;
+        console.error("Erro PagBank Checkout:", pagbankError || error.message);
+        
+        if (pagbankError && pagbankError.error_messages) {
+            return res.status(500).json(pagbankError);
+        }
+
+        res.status(500).json({ erro: "Falha na comunicação com PagBank.", detalhe: error.message });
     }
 });
 
