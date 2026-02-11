@@ -288,20 +288,23 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
 
     try {
         const payload = {
-            reference_id: String(loja_id),
+            reference_id: String(loja_id), 
             customer: {
-                name: req.body.nome_cliente || "Cliente SisDecor",
-                email: req.body.email_cliente || "cliente@email.com" 
+                name: String(req.body.nome_cliente || "Cliente SisDecor").substring(0, 50),
+                email: String(req.body.email_cliente || "cliente@email.com")
             },
             items: [{
-                reference_id: planoNormalizado,
-                name: item.nome,
+                reference_id: String(planoNormalizado),
+                name: String(item.nome),
                 quantity: 1,
-                unit_amount: item.valor
+                unit_amount: parseInt(item.valor) 
             }],
-            notification_urls: ["https://painel-de-controle-gcv.onrender.com/api/pagamentos/webhook"],
-            payment_methods: [{ type: "CREDIT_CARD" }, { type: "BOLETO" }, { type: "PIX" }],
-            redirect_url: "https://sisdecor.com.br/painel"
+            payment_methods: [
+                { type: "CREDIT_CARD" },
+                { type: "BOLETO" },
+                { type: "PIX" }
+            ],
+            redirect_url: "https://sisdecor.com.br"
         };
 
         const response = await axios.post(`${PAGSEGURO_API_URL}/checkouts`, payload, {
