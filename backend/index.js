@@ -40,7 +40,6 @@ app.options(/.*/, cors(corsOptions));
 app.use(helmet());
 app.use(morgan('combined')); 
 app.use(express.json()); 
-
 const createAccountLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000, 
 	max: 100,
