@@ -268,9 +268,13 @@ app.get('/api/team', async (req, res, next) => {
 });
 
 app.post('/api/pagamentos/checkout', async (req, res) => {
-    const { plano, loja_id } = req.body;
+const { plano, loja_id } = req.body;
     const PAGSEGURO_TOKEN = process.env.PAGBANK_TOKEN; 
-    const PAGSEGURO_API_URL = 'https://api.pagseguro.com';
+    const PAGSEGURO_API_URL = PAGSEGURO_TOKEN && PAGSEGURO_TOKEN.includes('-') 
+        ? 'https://sandbox.api.pagseguro.com' 
+        : 'https://api.pagseguro.com';
+
+    console.log(`Usando ambiente: ${PAGSEGURO_API_URL === 'https://api.pagseguro.com' ? 'PRODUÇÃO' : 'SANDBOX'}`);
     const planoNormalizado = String(plano).trim().toLowerCase();
 
     const planos = {
@@ -306,15 +310,13 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
             ],
             redirect_url: "https://sisdecor.com.br"
         };
-
-        const response = await axios.post(`${PAGSEGURO_API_URL}/checkouts`, payload, {
+       const response = await axios.post(`${PAGSEGURO_API_URL}/checkouts`, payload, {
             headers: {
-                'Authorization': `Bearer ${PAGSEGURO_TOKEN}`,
+                'Authorization': PAGSEGURO_TOKEN,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             }
         });
-
         const checkoutLink = response.data.links.find(link => link.rel === 'PAY');
         res.json({ url: checkoutLink.href });
 
