@@ -61,6 +61,16 @@ function showClientListLocal() {
 }
 
 function handleRouting() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const transactionId = urlParams.get('transaction_id');
+
+    if (transactionId) {
+        console.log("Retorno do PagBank detectado. ID:", transactionId);
+        showToast("Pagamento identificado! Estamos processando sua assinatura.", "success");
+        const novaUrl = window.location.origin + window.location.pathname + window.location.hash;
+        window.history.replaceState({}, document.title, novaUrl);
+    }
+
     const hash = window.location.hash;
     if (hash.startsWith('#cliente/')) {
         const clientId = hash.split('/')[1];
