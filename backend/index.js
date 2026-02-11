@@ -315,15 +315,15 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
         const checkoutLink = response.data.links.find(link => link.rel === 'PAY');
         res.json({ url: checkoutLink.href });
 
-    } catch (error) {
+   } catch (error) {
         const pagbankError = error.response?.data;
-        console.error("Erro PagBank Checkout:", pagbankError || error.message);
+        console.error("ERRO DETALHADO PAGBANK:", JSON.stringify(pagbankError, null, 2) || error.message);
         
-        if (pagbankError && pagbankError.error_messages) {
+        if (pagbankError) {
             return res.status(500).json(pagbankError);
         }
 
-        res.status(500).json({ erro: "Falha na comunicação com PagBank.", detalhe: error.message });
+        res.status(500).json({ erro: "Erro na comunicação com a API do PagBank.", detalhe: error.message });
     }
 });
 
