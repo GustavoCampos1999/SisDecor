@@ -310,7 +310,8 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
         const response = await axios.post(`${PAGSEGURO_API_URL}/checkouts`, payload, {
             headers: {
                 'Authorization': `Bearer ${PAGSEGURO_TOKEN}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
         });
 
@@ -318,14 +319,17 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
         res.json({ url: checkoutLink.href });
 
    } catch (error) {
-        const pagbankError = error.response?.data;
-        console.error("ERRO DETALHADO PAGBANK:", JSON.stringify(pagbankError, null, 2) || error.message);
-        
-        if (pagbankError) {
-            return res.status(500).json(pagbankError);
+        console.error("ERRO PAGBANK STATUS:", error.response?.status);
+        console.error("ERRO PAGBANK DATA:", JSON.stringify(error.response?.data, null, 2));
+
+        if (error.response?.data) {
+            return res.status(500).json(error.response.data);
         }
 
-        res.status(500).json({ erro: "Erro na comunicação com a API do PagBank.", detalhe: error.message });
+        res.status(500).json({ 
+            erro: "Erro na comunicação com a API do PagBank.", 
+            detalhe: error.message 
+        });
     }
 });
 
