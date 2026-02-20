@@ -40,20 +40,20 @@ app.options(/.*/, cors(corsOptions));
 app.use(helmet());
 app.use(morgan('combined')); 
 app.use(express.json()); 
+
 const createAccountLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000, 
-	max: 100,
-	message: { erro: "Muitas tentativas seguidas. Aguarde 15 minutos." },
-	standardHeaders: true, 
-	legacyHeaders: false,
+    windowMs: 15 * 60 * 1000, 
+    max: 100,
+    message: { erro: "Muitas tentativas seguidas. Aguarde 15 minutos." },
+    standardHeaders: true, 
+    legacyHeaders: false,
 });
 
 const apiLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000, 
-	max: 100, 
+    windowMs: 15 * 60 * 1000, 
+    max: 100, 
     message: { erro: "Muitos pedidos. Tente mais tarde." }
 });
-
 
 const PORTA = process.env.PORT || 3000;
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -125,6 +125,8 @@ const requireAdmin = async (req, res, next) => {
     }
 };
 
+// --- ROTAS PÚBLICAS ---
+
 app.get('/health', (_req, res) => res.status(200).send('Online.'));
 
 app.post('/api/check-email', async (req, res, next) => {
@@ -135,6 +137,19 @@ app.post('/api/check-email', async (req, res, next) => {
         return res.json({ exists: result.rows.length > 0 });
     } catch (error) {
         next(error);
+    }
+});
+
+// Rota de Status do Pagamento (Pública para o return.js não dar erro 401)
+app.get('/api/pagamentos/status', async (req, res) => {
+    try {
+        const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+        res.json({
+            status: session.status,
+            customer_email: session.customer_details?.email
+        });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
     }
 });
 
@@ -207,65 +222,11 @@ app.post('/register', createAccountLimiter, async (req, res) => {
     }
 });
 
-app.post('/api/pagamentos/webhook', async (req, res) => {
-    const { reference_id, status, items } = req.body;
-
-    try {
-        if (status === 'PAID' || status === 'AVAILABLE') {
-            const lojaId = reference_id;
-            const planoKey = items[0].reference_id;
-           const dias = planoKey === 'mensal' ? 30 : (planoKey === 'trimestral' ? 90 : (planoKey === 'semestral' ? 180 : 365));
-            
-            const { data: perfil } = await supabaseService
-                .from('perfis')
-                .select('data_expiracao_assinatura')
-                .eq('loja_id', lojaId)
-                .single();
-            
-            let dataBase = new Date();
-            if (perfil?.data_expiracao_assinatura && new Date(perfil.data_expiracao_assinatura) > new Date()) {
-                dataBase = new Date(perfil.data_expiracao_assinatura);
-            }
-            
-            dataBase.setDate(dataBase.getDate() + dias);
-
-            await supabaseService
-                .from('perfis')
-                .update({ 
-                    data_expiracao_assinatura: dataBase.toISOString(),
-                    status_assinatura: 'ativo' 
-                })
-                .eq('loja_id', lojaId);
-
-            console.log(`✅ Webhook: Loja ${lojaId} renovada por ${dias} dias.`);
-        }
-        res.sendStatus(200);
-    } catch (error) {
-        console.error("Erro no Webhook PagBank:", error);
-        res.sendStatus(500);
-    }
-});
-
+// --- ATIVAÇÃO DE PROTEÇÃO ---
 app.use('/api', apiLimiter);
 app.use('/api', authMiddleware);
 
-app.get('/api/team', async (req, res, next) => {
-    try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
-        const { data: perfil } = await supabaseService.from('perfis').select('loja_id').eq('user_id', user.id).single();
-        
-        if (!perfil) return res.status(403).json({ erro: "Perfil não encontrado" });
-
-        const { data: equipe } = await supabaseService
-            .from('perfis')
-            .select('user_id, nome_usuario, role, role_id')
-            .eq('loja_id', perfil.loja_id);
-        
-        res.json(equipe || []);
-    } catch (error) {
-        next(error);
-    }
-});
+// --- ROTAS PROTEGIDAS ---
 
 app.post('/api/pagamentos/checkout', async (req, res) => {
     const { plano, loja_id, email_cliente } = req.body;
@@ -301,18 +262,7 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
         res.status(500).json({ erro: error.message });
     }
 });
-app.get('/api/pagamentos/status', async (req, res) => {
-    try {
-        const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
 
-        res.json({
-            status: session.status,
-            customer_email: session.customer_details?.email
-        });
-    } catch (error) {
-        res.status(500).json({ erro: error.message });
-    }
-});
 app.post('/api/calcular', (req, res, _next) => {
    try {
     const resultados = calcularOrcamento(req.body);
@@ -365,6 +315,24 @@ app.put('/api/orcamentos/:clientId', async (req, res, next) => {
           
         if (error) throw error;
         res.status(200).json(data);
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get('/api/team', async (req, res, next) => {
+    try {
+        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
+        const { data: perfil } = await supabaseService.from('perfis').select('loja_id').eq('user_id', user.id).single();
+        
+        if (!perfil) return res.status(403).json({ erro: "Perfil não encontrado" });
+
+        const { data: equipe } = await supabaseService
+            .from('perfis')
+            .select('user_id, nome_usuario, role, role_id')
+            .eq('loja_id', perfil.loja_id);
+        
+        res.json(equipe || []);
     } catch (error) {
         next(error);
     }
