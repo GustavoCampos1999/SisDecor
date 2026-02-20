@@ -164,22 +164,27 @@ app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), async (
 
             const { data: loja, error: errorLoja } = await supabaseService
                 .from('lojas')
-                .select('trial_ends_at')
+                .select('data_expiracao_assinatura, data_fim_teste, trial_ends_at')
                 .eq('id', lojaId)
                 .maybeSingle();
 
             if (errorLoja) throw new Error("Erro ao buscar loja: " + errorLoja.message);
-
             let dataBase = new Date();
-            const dataAtualNoBanco = loja?.trial_ends_at ? new Date(loja.trial_ends_at) : null;
-            
-            if (dataAtualNoBanco && dataAtualNoBanco > new Date()) {
-                dataBase = dataAtualNoBanco;
+            const datasPossiveis = [
+                loja?.data_expiracao_assinatura,
+                loja?.data_fim_teste,
+                loja?.trial_ends_at
+            ].filter(d => d).map(d => new Date(d));
+
+            if (datasPossiveis.length > 0) {
+                const maiorData = new Date(Math.max.apply(null, datasPossiveis));
+                if (maiorData > new Date()) {
+                    dataBase = maiorData; 
+                }
             }
 
             dataBase.setDate(dataBase.getDate() + diasParaAdicionar);
             const novaDataISO = dataBase.toISOString();
-
             const [resPerfis, resLojas] = await Promise.all([
                 supabaseService
                     .from('perfis')
@@ -194,8 +199,9 @@ app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), async (
                     .update({ 
                         status_assinatura: 'ativo',
                         subscription_status: 'active',
-                        data_fim_teste: novaDataISO,
-                        trial_ends_at: novaDataISO  
+                        data_expiracao_assinatura: novaDataISO, 
+                        data_fim_teste: novaDataISO, 
+                        trial_ends_at: novaDataISO
                     })
                     .eq('id', lojaId)
             ]);
