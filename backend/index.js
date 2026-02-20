@@ -37,10 +37,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options(/.*/, cors(corsOptions)); 
 
-app.use(helmet());
-app.use(morgan('combined')); 
-app.use(express.json()); 
-
 const createAccountLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, 
     max: 100,
@@ -140,6 +136,8 @@ app.post('/api/check-email', async (req, res, next) => {
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+app.use(helmet());
+app.use(morgan('combined')); 
 app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
     const sig = req.headers['stripe-signature'];
     let event;
@@ -155,8 +153,6 @@ app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), async (
         const session = event.data.object;
         const lojaId = session.metadata.loja_id;
         const planoNome = session.metadata.plano_selecionado;
-
-        console.log(`💰 Pagamento confirmado para a Loja: ${lojaId}`);
 
         try {
             const diasParaAdicionar = {
@@ -196,13 +192,16 @@ app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), async (
                     })
                     .eq('id', lojaId)
             ]);
-            console.log("✅ Banco de dados atualizado com sucesso!");
+
+            console.log(`Pagamento confirmado para a Loja: ${lojaId}. Renovada até ${dataBase.toLocaleDateString()}`);
         } catch (dbError) {
             console.error("❌ Erro ao atualizar banco:", dbError.message);
         }
     }
+
     res.json({ received: true });
 });
+app.use(express.json());
 
 app.post('/register', createAccountLimiter, async (req, res) => {
     const validacao = registerSchema.safeParse(req.body);
