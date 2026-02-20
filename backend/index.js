@@ -149,7 +149,7 @@ app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), async (
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    if (event.type === 'checkout.session.completed') {
+   if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
         const lojaId = session.metadata.loja_id;
         const planoNome = session.metadata.plano_selecionado;
@@ -162,24 +162,29 @@ app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), async (
                 'anual': 365
             }[planoNome] || 30;
 
-            const { data: perfil } = await supabaseService
-                .from('perfis')
-                .select('data_expiracao_assinatura')
-                .eq('loja_id', lojaId)
-                .single();
+            const { data: loja, error: errorLoja } = await supabaseService
+                .from('lojas')
+                .select('trial_ends_at')
+                .eq('id', lojaId)
+                .maybeSingle();
+
+            if (errorLoja) throw new Error("Erro ao buscar loja: " + errorLoja.message);
 
             let dataBase = new Date();
-            if (perfil?.data_expiracao_assinatura && new Date(perfil.data_expiracao_assinatura) > new Date()) {
-                dataBase = new Date(perfil.data_expiracao_assinatura);
+            const dataAtualNoBanco = loja?.trial_ends_at ? new Date(loja.trial_ends_at) : null;
+            
+            if (dataAtualNoBanco && dataAtualNoBanco > new Date()) {
+                dataBase = dataAtualNoBanco;
             }
 
             dataBase.setDate(dataBase.getDate() + diasParaAdicionar);
+            const novaDataISO = dataBase.toISOString();
 
-            await Promise.all([
+            const [resPerfis, resLojas] = await Promise.all([
                 supabaseService
                     .from('perfis')
                     .update({ 
-                        data_expiracao_assinatura: dataBase.toISOString(),
+                        data_expiracao_assinatura: novaDataISO,
                         status_assinatura: 'ativo' 
                     })
                     .eq('loja_id', lojaId),
@@ -188,17 +193,21 @@ app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), async (
                     .from('lojas')
                     .update({ 
                         status_assinatura: 'ativo',
-                        subscription_status: 'active'
+                        subscription_status: 'active',
+                        data_fim_teste: novaDataISO,
+                        trial_ends_at: novaDataISO  
                     })
                     .eq('id', lojaId)
             ]);
 
-            console.log(`Pagamento confirmado para a Loja: ${lojaId}. Renovada até ${dataBase.toLocaleDateString()}`);
-        } catch (dbError) {
-            console.error("❌ Erro ao atualizar banco:", dbError.message);
+            if (resLojas.error) console.error("Erro ao atualizar loja:", resLojas.error);
+            
+            console.log(`✅ Sucesso! Loja ${lojaId} (${planoNome}) renovada até ${dataBase.toLocaleDateString('pt-BR')}`);
+
+        } catch (err) {
+            console.error("❌ Erro no processamento do saldo:", err.message);
         }
     }
-
     res.json({ received: true });
 });
 app.use(express.json());
