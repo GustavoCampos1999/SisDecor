@@ -138,15 +138,25 @@ app.post('/api/check-email', async (req, res, next) => {
     }
 });
 
-app.post('/api/webhook/stripe', async (req, res) => {
-    const event = req.body;
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    } catch (err) {
+        console.error(`❌ Erro de assinatura: ${err.message}`);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
 
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
         const lojaId = session.metadata.loja_id;
         const planoNome = session.metadata.plano_selecionado;
 
-        console.log(`💰 Pagamento confirmado para a Loja: ${lojaId}. Plano: ${planoNome}`);
+        console.log(`💰 Pagamento confirmado para a Loja: ${lojaId}`);
 
         try {
             const diasParaAdicionar = {
@@ -186,13 +196,11 @@ app.post('/api/webhook/stripe', async (req, res) => {
                     })
                     .eq('id', lojaId)
             ]);
-
-            console.log(`✅ Sucesso: Loja ${lojaId} renovada até ${dataBase.toLocaleDateString()}`);
+            console.log("✅ Banco de dados atualizado com sucesso!");
         } catch (dbError) {
-            console.error("❌ Erro ao atualizar banco no Webhook:", dbError.message);
+            console.error("❌ Erro ao atualizar banco:", dbError.message);
         }
     }
-
     res.json({ received: true });
 });
 
