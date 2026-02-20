@@ -125,8 +125,6 @@ const requireAdmin = async (req, res, next) => {
     }
 };
 
-// --- ROTAS PÚBLICAS ---
-
 app.get('/health', (_req, res) => res.status(200).send('Online.'));
 
 app.post('/api/check-email', async (req, res, next) => {
@@ -140,7 +138,6 @@ app.post('/api/check-email', async (req, res, next) => {
     }
 });
 
-// Rota de Status do Pagamento (Pública para o return.js não dar erro 401)
 app.get('/api/pagamentos/status', async (req, res) => {
     try {
         const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
@@ -222,11 +219,8 @@ app.post('/register', createAccountLimiter, async (req, res) => {
     }
 });
 
-// --- ATIVAÇÃO DE PROTEÇÃO ---
 app.use('/api', apiLimiter);
 app.use('/api', authMiddleware);
-
-// --- ROTAS PROTEGIDAS ---
 
 app.post('/api/pagamentos/checkout', async (req, res) => {
     const { plano, loja_id, email_cliente } = req.body;
