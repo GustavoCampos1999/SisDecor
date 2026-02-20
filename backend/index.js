@@ -269,13 +269,11 @@ app.get('/api/team', async (req, res, next) => {
 
 app.post('/api/pagamentos/checkout', async (req, res) => {
     const { plano, loja_id } = req.body;
-    const PAGSEGURO_TOKEN = process.env.PAGBANK_TOKEN; 
-    const PAGSEGURO_API_URL = PAGSEGURO_TOKEN && PAGSEGURO_TOKEN.includes('-') 
-        ? 'https://sandbox.api.pagseguro.com' 
-        : 'https://api.pagseguro.com';
+    const rawToken = process.env.PAGBANK_TOKEN || "";
+    const PAGSEGURO_TOKEN = rawToken.replace(/Bearer\s+/i, "").trim();
+    const PAGSEGURO_API_URL = 'https://api.pagseguro.com';
 
     const planoNormalizado = String(plano).trim().toLowerCase();
-
     const planos = {
         'mensal': { nome: 'Assinatura SisDecor - Mensal', valor: 3990 },
         'trimestral': { nome: 'Assinatura SisDecor - Trimestral', valor: 11970 }, 
@@ -284,10 +282,7 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
     };
 
     const item = planos[planoNormalizado];
-
-    if (!item) {
-        return res.status(400).json({ erro: `Plano inválido: ${plano}` });
-    }
+    if (!item) return res.status(400).json({ erro: `Plano inválido: ${plano}` });
 
     try {
         const { data: lojaInfo } = await supabaseService
@@ -316,10 +311,9 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
             ],
             redirect_url: "https://sisdecor.com.br"
         };
-
         const response = await axios.post(`${PAGSEGURO_API_URL}/checkouts`, payload, {
             headers: {
-                'Authorization': `Bearer ${PAGSEGURO_TOKEN}`, 
+                'Authorization': PAGSEGURO_TOKEN, 
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             }
@@ -329,17 +323,12 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
         res.json({ url: checkoutLink.href });
 
    } catch (error) {
-        console.error("ERRO PAGBANK STATUS:", error.response?.status);
-        console.error("ERRO PAGBANK DATA:", JSON.stringify(error.response?.data, null, 2));
+        console.error("ERRO DETALHADO PAGBANK:", error.response?.data || error.message);
 
         if (error.response?.data) {
-            return res.status(500).json(error.response.data);
+            return res.status(error.response.status).json(error.response.data);
         }
-
-        res.status(500).json({ 
-            erro: "Erro na comunicação com a API do PagBank.", 
-            detalhe: error.message 
-        });
+        res.status(500).json({ erro: "Erro interno no servidor de pagamento." });
     }
 });
 
