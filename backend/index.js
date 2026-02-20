@@ -266,6 +266,20 @@ app.post('/register', createAccountLimiter, async (req, res) => {
 });
 
 app.use('/api', apiLimiter);
+
+app.get('/api/pagamentos/status', async (req, res) => {
+    const { session_id } = req.query;
+    try {
+        const session = await stripe.checkout.sessions.retrieve(session_id);
+        res.json({
+            status: session.status,
+            customer_email: session.customer_details?.email
+        });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
 app.use('/api', authMiddleware);
 
 app.post('/api/pagamentos/checkout', async (req, res) => {
