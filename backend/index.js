@@ -138,16 +138,62 @@ app.post('/api/check-email', async (req, res, next) => {
     }
 });
 
-app.get('/api/pagamentos/status', async (req, res) => {
-    try {
-        const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
-        res.json({
-            status: session.status,
-            customer_email: session.customer_details?.email
-        });
-    } catch (error) {
-        res.status(500).json({ erro: error.message });
+app.post('/api/webhook/stripe', async (req, res) => {
+    const event = req.body;
+
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const lojaId = session.metadata.loja_id;
+        const planoNome = session.metadata.plano_selecionado;
+
+        console.log(`💰 Pagamento confirmado para a Loja: ${lojaId}. Plano: ${planoNome}`);
+
+        try {
+            const diasParaAdicionar = {
+                'mensal': 30,
+                'trimestral': 90,
+                'semestral': 180,
+                'anual': 365
+            }[planoNome] || 30;
+
+            const { data: perfil } = await supabaseService
+                .from('perfis')
+                .select('data_expiracao_assinatura')
+                .eq('loja_id', lojaId)
+                .single();
+
+            let dataBase = new Date();
+            if (perfil?.data_expiracao_assinatura && new Date(perfil.data_expiracao_assinatura) > new Date()) {
+                dataBase = new Date(perfil.data_expiracao_assinatura);
+            }
+
+            dataBase.setDate(dataBase.getDate() + diasParaAdicionar);
+
+            await Promise.all([
+                supabaseService
+                    .from('perfis')
+                    .update({ 
+                        data_expiracao_assinatura: dataBase.toISOString(),
+                        status_assinatura: 'ativo' 
+                    })
+                    .eq('loja_id', lojaId),
+                
+                supabaseService
+                    .from('lojas')
+                    .update({ 
+                        status_assinatura: 'ativo',
+                        subscription_status: 'active'
+                    })
+                    .eq('id', lojaId)
+            ]);
+
+            console.log(`✅ Sucesso: Loja ${lojaId} renovada até ${dataBase.toLocaleDateString()}`);
+        } catch (dbError) {
+            console.error("❌ Erro ao atualizar banco no Webhook:", dbError.message);
+        }
     }
+
+    res.json({ received: true });
 });
 
 app.post('/register', createAccountLimiter, async (req, res) => {
@@ -248,7 +294,10 @@ app.post('/api/pagamentos/checkout', async (req, res) => {
             }],
             mode: 'payment',
             return_url: `https://sisdecor.com.br/return.html?session_id={CHECKOUT_SESSION_ID}`,
-            metadata: { loja_id: String(loja_id) }
+            metadata: { 
+                loja_id: String(loja_id),
+                plano_selecionado: plano.toLowerCase() 
+            }
         });
 
         res.send({ clientSecret: session.client_secret });
