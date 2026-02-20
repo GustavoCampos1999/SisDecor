@@ -561,8 +561,10 @@ function setupTableSorting(tableId, dataArray, renderFunction) {
      }
 }
 
+const stripe = Stripe("pk_test_51T2tSIFLyxQj3iMDv7aYXTWhs6as3wZTgNRyFWfF6w1V9z3xe7EgE4IdnlgsmkJvjBOmcYExFce83nMp3tIFoXcs00kT8cF3rh");
+
 export function setupPagamentoBotoes(lojaId) {
-    const botoes = document.querySelectorAll('.btn-pagseguro');
+    const botoes = document.querySelectorAll('.btn-pagseguro'); 
 
     botoes.forEach(btn => {
         btn.onclick = async () => {
@@ -571,54 +573,47 @@ export function setupPagamentoBotoes(lojaId) {
             
             try {
                 btn.disabled = true;
-                btn.textContent = 'Processando...';
+                btn.textContent = 'Carregando...';
 
                 const { data: { session } } = await _supabase.auth.getSession();
-                const token = session?.access_token;
-
-                const { data: perfilData } = await _supabase
-                    .from('perfis')
-                    .select('nome_usuario')
-                    .eq('user_id', session.user.id)
-                    .maybeSingle();
+                if (!session) {
+                    alert("Você precisa estar logado para realizar uma assinatura.");
+                    return;
+                }
 
                 const response = await fetch(`${BACKEND_API_URL}/api/pagamentos/checkout`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` 
+                        'Authorization': `Bearer ${session.access_token}` 
                     },
                     body: JSON.stringify({ 
                         plano: planoRaw, 
                         loja_id: lojaId,
-                        nome_cliente: perfilData?.nome_usuario || "Cliente SisDecor",
                         email_cliente: session.user.email 
                     })
                 });
 
-                const data = await response.json();
+                const responseData = await response.json();
 
-                if (response.ok && data.url) {
-                    window.open(data.url, '_blank');    
-                } else {
-                    console.error("Erro retornado pelo servidor/PagBank:", data);
-
-                    console.error("Detalhes do erro PagBank:", JSON.stringify(data, null, 2));
-
-                    if (data.error_messages) {
-                        const mensagens = data.error_messages.map(err => `${err.parameter_name}: ${err.description}`).join('\n');
-                        alert(`Erro de Validação PagBank:\n${mensagens}`);
-                    } else {
-                        alert(`Erro no Servidor: ${data.erro || 'Erro inesperado'}`);
-                    }
-                    
-                    if (JSON.stringify(data).includes('allowlist_access_required')) {
-                        console.warn("⚠️ Bloqueio de Segurança: Seu domínio/conta precisa de liberação no PagBank.");
-                    }
+                if (!response.ok) {
+                    throw new Error(responseData.erro || 'Erro ao iniciar checkout.');
                 }
+
+                const checkoutContainer = document.getElementById('checkout-container');
+                if (checkoutContainer) {
+                    checkoutContainer.style.display = 'block';
+                    
+                    const checkout = await stripe.initEmbeddedCheckout({
+                        clientSecret: responseData.clientSecret,
+                    });
+
+                    checkout.mount('#checkout');
+                }
+
             } catch (error) {
-                console.error("Erro de conexão:", error);
-                alert('Erro de conexão com o servidor.');
+                console.error("Erro no processo de pagamento:", error);
+                alert(`Erro: ${error.message}`);
             } finally {
                 btn.disabled = false;
                 btn.textContent = originalText;

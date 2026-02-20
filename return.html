@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processando Pagamento - SisDecor</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .status-container { text-align: center; padding: 50px 20px; max-width: 500px; margin: 100px auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #931011; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none; }
+        .btn-voltar { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #931011; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="status-container">
+        <div id="status-checking">
+            <h2>Verificando pagamento...</h2>
+            <div class="spinner"></div>
+            <p>Por favor, aguarde um momento.</p>
+        </div>
+
+        <div id="status-success" class="hidden">
+            <h2 style="color: #28a745;">🎉 Pagamento Concluído!</h2>
+            <p>Obrigado por assinar o <strong>SisDecor</strong>. A sua conta está a ser actualizada.</p>
+            <p>Enviámos uma confirmação para: <strong id="customer-email"></strong></p>
+            <a href="index.html" class="btn-voltar">Ir para o Painel</a>
+        </div>
+
+        <div id="status-error" class="hidden">
+            <h2 style="color: #dc3545;">Ops! Algo correu mal.</h2>
+            <p id="error-message">Não conseguimos confirmar o seu pagamento.</p>
+            <a href="index.html" class="btn-voltar">Tentar Novamente</a>
+        </div>
+    </div>
+
+    <script src="return.js"></script>
+</body>
+</html>

@@ -8,7 +8,7 @@ const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const { calcularOrcamento } = require('./calculo.js');
 const db = require('./database.js'); 
-const axios = require('axios'); 
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 app.set('trust proxy', 1);
@@ -268,70 +268,51 @@ app.get('/api/team', async (req, res, next) => {
 });
 
 app.post('/api/pagamentos/checkout', async (req, res) => {
-    const { plano, loja_id } = req.body;
-    const rawToken = process.env.PAGBANK_TOKEN || "";
-    const PAGSEGURO_TOKEN = rawToken.replace(/Bearer\s+/i, "").trim();
-    const PAGSEGURO_API_URL = 'https://api.pagseguro.com';
-
-    const planoNormalizado = String(plano).trim().toLowerCase();
+    const { plano, loja_id, email_cliente } = req.body;
+    
     const planos = {
-        'mensal': { nome: 'Assinatura SisDecor - Mensal', valor: 3990 },
-        'trimestral': { nome: 'Assinatura SisDecor - Trimestral', valor: 11970 }, 
-        'semestral': { nome: 'Assinatura SisDecor - Semestral', valor: 23890 },
-        'anual': { nome: 'Assinatura SisDecor - Anual', valor: 35890 }
+        'mensal': { nome: 'Assinatura SisDecor - Mensal', valor: 1990 },     
+        'trimestral': { nome: 'Assinatura SisDecor - Trimestral', valor: 5373 }, 
+        'semestral': { nome: 'Assinatura SisDecor - Semestral', valor: 9552 },  
+        'anual': { nome: 'Assinatura SisDecor - Anual', valor: 16716 }         
     };
 
-    const item = planos[planoNormalizado];
-    if (!item) return res.status(400).json({ erro: `Plano inválido: ${plano}` });
+    const item = planos[plano.toLowerCase()];
+    if (!item) return res.status(400).json({ erro: "Plano inválido." });
 
     try {
-        const { data: lojaInfo } = await supabaseService
-            .from('lojas')
-            .select('cnpj')
-            .eq('id', loja_id)
-            .single();
-
-        const payload = {
-            reference_id: String(loja_id), 
-            customer: {
-                name: String(req.body.nome_cliente || "Cliente SisDecor").substring(0, 50),
-                email: String(req.body.email_cliente || "cliente@email.com"),
-                tax_id: String(lojaInfo?.cnpj || "00000000000000").replace(/\D/g, '') 
-            },
-            items: [{
-                reference_id: String(planoNormalizado),
-                name: String(item.nome),
+        const session = await stripe.checkout.sessions.create({
+            ui_mode: 'embedded', 
+            line_items: [{
+                price_data: {
+                    currency: 'brl',
+                    product_data: { name: item.nome },
+                    unit_amount: item.valor,
+                },
                 quantity: 1,
-                unit_amount: parseInt(item.valor) 
             }],
-            payment_methods: [
-                { type: "CREDIT_CARD" },
-                { type: "BOLETO" },
-                { type: "PIX" }
-            ],
-            redirect_url: "https://sisdecor.com.br"
-        };
-        const response = await axios.post(`${PAGSEGURO_API_URL}/checkouts`, payload, {
-            headers: {
-                'Authorization': PAGSEGURO_TOKEN, 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
+            mode: 'payment',
+            return_url: `https://sisdecor.com.br/return.html?session_id={CHECKOUT_SESSION_ID}`,
+            metadata: { loja_id: String(loja_id) }
         });
 
-        const checkoutLink = response.data.links.find(link => link.rel === 'PAY');
-        res.json({ url: checkoutLink.href });
-
-   } catch (error) {
-        console.error("ERRO DETALHADO PAGBANK:", error.response?.data || error.message);
-
-        if (error.response?.data) {
-            return res.status(error.response.status).json(error.response.data);
-        }
-        res.status(500).json({ erro: "Erro interno no servidor de pagamento." });
+        res.send({ clientSecret: session.client_secret });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
     }
 });
+app.get('/api/pagamentos/status', async (req, res) => {
+    try {
+        const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
 
+        res.json({
+            status: session.status,
+            customer_email: session.customer_details?.email
+        });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
 app.post('/api/calcular', (req, res, _next) => {
    try {
     const resultados = calcularOrcamento(req.body);
