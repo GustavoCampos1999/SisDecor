@@ -319,7 +319,7 @@ const { plano, loja_id } = req.body;
         };
        const response = await axios.post(`${PAGSEGURO_API_URL}/checkouts`, payload, {
             headers: {
-                'Authorization': PAGSEGURO_TOKEN,
+                'Authorization': `Bearer ${PAGSEGURO_TOKEN}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             }
