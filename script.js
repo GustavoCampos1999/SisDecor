@@ -603,13 +603,13 @@ export function setupPagamentoBotoes(lojaId) {
                 } else {
                     console.error("Erro retornado pelo servidor/PagBank:", data);
 
-                    if (data.error_messages && data.error_messages.length > 0) {
-                        const mainError = data.error_messages[0];
-                        alert(`Erro PagBank: ${mainError.description}`);
-                    } else if (data.erro) {
-                        alert(`Erro no Servidor: ${data.erro}`);
+                    console.error("Detalhes do erro PagBank:", JSON.stringify(data, null, 2));
+
+                    if (data.error_messages) {
+                        const mensagens = data.error_messages.map(err => `${err.parameter_name}: ${err.description}`).join('\n');
+                        alert(`Erro de Validação PagBank:\n${mensagens}`);
                     } else {
-                        alert('Erro inesperado ao processar o checkout.');
+                        alert(`Erro no Servidor: ${data.erro || 'Erro inesperado'}`);
                     }
                     
                     if (JSON.stringify(data).includes('allowlist_access_required')) {

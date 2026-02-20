@@ -291,11 +291,18 @@ const { plano, loja_id } = req.body;
     }
 
     try {
+        const { data: lojaInfo } = await supabaseService
+            .from('lojas')
+            .select('cnpj')
+            .eq('id', loja_id)
+            .single();
+
         const payload = {
-            reference_id: String(loja_id), 
+            reference_id: String(loja_id),
             customer: {
                 name: String(req.body.nome_cliente || "Cliente SisDecor").substring(0, 50),
-                email: String(req.body.email_cliente || "cliente@email.com")
+                email: String(req.body.email_cliente || "cliente@email.com"),
+                tax_id: String(lojaInfo?.cnpj || "00000000000000").replace(/\D/g, '') 
             },
             items: [{
                 reference_id: String(planoNormalizado),
