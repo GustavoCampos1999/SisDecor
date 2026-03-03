@@ -693,6 +693,107 @@ body.dark-mode #container-inputs-taxas input:focus {
         font-size: 16px; 
     }
 }
+@media (min-width: 481px) and (max-width: 1024px) {
+    .calculator-header {
+        display: grid !important;
+
+        grid-template-areas: 
+            "voltar acoes"
+            "nome nome";
+        grid-template-columns: auto 1fr;
+        gap: 15px;
+        padding: 15px 20px !important;
+        align-items: center;
+    }
+
+    #btn-voltar-clientes {
+        grid-area: voltar;
+        margin: 0 !important;
+        white-space: nowrap;
+    }
+
+    .save-status-wrapper {
+        grid-area: acoes;
+        display: flex !important;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px !important;
+    }
+    #calculator-client-name {
+        grid-area: nome;
+        font-size: 18px !important;
+        margin: 5px 0 0 0 !important;
+        text-align: left;
+        border-top: 1px solid rgba(0,0,0,0.1); 
+        padding-top: 10px;
+        width: 100%;
+    }
+
+    .btn-print-orcamento {
+        font-size: 20px !important;
+    }
+
+    .save-status-message {
+        font-size: 12px;
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .calculator-header {
+        display: grid !important;
+        grid-template-areas: 
+            "back actions"
+            "title title";
+        grid-template-columns: auto 1fr;
+        gap: 12px;
+        padding: 12px !important;
+        align-items: center;
+    }
+
+    #btn-voltar-clientes {
+        grid-area: back;
+        font-size: 12px !important;
+        padding: 6px 10px !important;
+        margin: 0 !important;
+    }
+
+    .calculator-header h2 {
+        grid-area: title;
+        text-align: left !important;
+        font-size: 15px !important;
+        margin: 0 !important;
+        padding-top: 10px;
+        border-top: 1px solid #eee; 
+        white-space: normal !important; 
+        line-height: 1.4;
+        color: #333;
+    }
+
+    .save-status-wrapper {
+        grid-area: actions;
+        justify-content: flex-end !important;
+        gap: 8px !important;
+        min-width: 0 !important;
+    }
+
+    .btn-print-orcamento {
+        font-size: 18px !important;
+        margin: 0 !important;
+    }
+
+    .btn-manual-save {
+        padding: 6px 12px !important;
+        font-size: 13px !important;
+    }
+
+    .save-status-message {
+        display: none; 
+    }
+}
 
 @media print {
     @page { 

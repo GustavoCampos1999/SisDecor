@@ -1657,6 +1657,27 @@ body.dark-mode .markup-desc {
     border-left-color: #e0a800;
 }
 
+.btn-logout-modal {
+    display: block;
+    margin: 10px auto 0;
+    background: none;
+    border: none;
+    color: #931011; 
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+
+.btn-logout-modal:hover {
+    color: #7a0d0e;
+}
+
+body.dark-mode .btn-logout-modal {
+    color: #e06c6e;
+}
+
 @media (max-width: 600px) {
     .markup-config-group {
         flex-direction: column;
@@ -1776,6 +1797,35 @@ body.dark-mode .markup-desc {
     #subscription-overlay > div > div:last-of-type {
         margin-top: 20px !important;
         padding-top: 15px !important;
+    }
+    .pricing-modal-content {
+        width: 95% !important;
+        max-height: 95vh;
+        overflow-y: auto; 
+        padding: 30px 15px !important;
+    }
+
+    .pricing-grid {
+        flex-direction: column; 
+        align-items: center;
+        gap: 25px; 
+    }
+
+    .pricing-card {
+        width: 100% !important;
+        max-width: 320px;
+        transform: none !important; 
+        margin: 0 auto;
+    }
+
+    .pricing-card.featured {
+        transform: none !important; 
+        border-width: 2px;
+        box-shadow: 0 8px 20px rgba(147, 16, 17, 0.2);
+    }
+
+    .badge-pop {
+        top: -10px; 
     }
 }
 

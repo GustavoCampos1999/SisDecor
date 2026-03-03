@@ -154,15 +154,23 @@ function mostrarDetalhesPlano(loja) {
 }
 
 export function setupLogoutButton() {
-    const btnLogout = document.getElementById('btn-logout');
-    if (!btnLogout) return;
+    const buttons = [
+        document.getElementById('btn-logout'),
+        document.getElementById('btn-logout-pricing')
+    ];
 
-    btnLogout.addEventListener('click', async (e) => {
-        e.preventDefault();
-        btnLogout.textContent = 'Saindo...';
-        await _supabase.auth.signOut();
-        localStorage.clear(); 
-        window.location.href = './Login/login.html';
+    buttons.forEach(btn => {
+        if (!btn) return;
+
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const originalText = btn.textContent;
+            btn.textContent = 'Saindo...';
+            
+            await _supabase.auth.signOut();
+            localStorage.clear(); 
+            window.location.href = './Login/login.html';
+        });
     });
 }
 
