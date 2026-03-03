@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Controle GCV</title>
+    <title>SisDecor</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="calculadora.css">
     <link rel="icon" type="image/png" href="images/favicon.ico">
@@ -104,9 +104,22 @@
                             <label for="select-frete-global">FRETE</label>
                             <select id="select-frete-global" class="global-calc-trigger"></select>
                         </div>
-
+                       <div>
+                            <label for="input-desconto-global">DESCONTO</label>
+                            <div class="input-group-desconto">
+                                <input type="text" id="input-desconto-global" class="global-calc-trigger" inputmode="decimal">
+                                <select id="select-tipo-desconto-global" class="global-calc-trigger">
+                                    <option value="R$">R$</option>
+                                    <option value="%">%</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
+                </div>
 
+                <div id="calculator-notes-container" class="calculator-container" style="display: none; margin-top: 20px; padding: 15px 25px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <label for="textarea-anotacoes" style="font-weight: bold; font-size: 14px; color: #555; display: block; margin-bottom: 10px; text-transform: uppercase;">Anotações</label>
+                    <textarea id="textarea-anotacoes" rows="3" style="width: 100%; border: 1px solid #ccc; border-radius: 6px; padding: 10px; font-family: inherit; font-size: 14px; resize: vertical; box-sizing: border-box;" placeholder="Adicione observações gerais para este orçamento..."></textarea>
                 </div>
 
                 <div id="calculator-summary" class="calculator-container" style="display: none;">
@@ -147,6 +160,7 @@
                     <button class="subtab-button" data-subtab="subtab-trilho">Trilho</button>
                     <button class="subtab-button" data-subtab="subtab-amorim">Amorim</button>
                     <button class="subtab-button" data-subtab="subtab-outros">Outros</button>
+                    <button class="subtab-button" data-subtab="subtab-markup">Markup</button>
                 </nav>
 
                 <div id="subtab-tecidos" class="subtab-content active">
@@ -247,6 +261,26 @@
                         </table>
                     </section>
                 </div>
+
+                <div id="subtab-markup" class="subtab-content">
+                    <section class="gerenciar-dados-secao config-markup-secao">
+                        <div class="secao-header">
+                            <h2>Configurações de Markup Padrão</h2>
+                        </div>
+                        
+                        <div class="markup-config-group">
+                            <label for="input-markup-padrao">Markup Padrão Global (%):</label>
+                            <input type="number" id="input-markup-padrao" value="100">
+                            <button id="btn-salvar-markup-padrao" class="btn-salvar">Salvar</button>
+                        </div>
+
+                        <div class="markup-desc">
+                            <strong>Aviso:</strong> Esse valor será o inicial para <strong>novos orçamentos</strong>.<br> 
+                            Se você modificar na engrenagem da calculadora, a alteração será salva apenas para o orçamento daquele cliente.
+                        </div>
+                    </section>
+                </div>
+
                 <div id="subtab-amorim" class="subtab-content">
 
                     <div class="amorim-card">
@@ -609,7 +643,12 @@
 
     <template id="template-linha-amorim">
         <tr class="linha-calculo-cliente" data-linha-type="amorim">
-            <td class="col-acoes-calc"><button class="btn-remover-linha btn-excluir">×</button></td>
+            <td class="col-acoes-calc">
+    <div style="display: flex; gap: 4px; justify-content: center;">
+        <button class="btn-duplicar-linha" title="Duplicar ambiente">⧉</button>
+        <button class="btn-remover-linha btn-excluir" title="Remover">×</button>
+    </div>
+</td>
             <td class="col-selecionar-calc"><input type="checkbox" class="select-linha-checkbox" title="Selecionar linha"></td>
             <td class="col-ambiente-calc"><input type="text" class="input-ambiente" placeholder="Ex: Sala"></td>
             
@@ -640,7 +679,12 @@
 
     <template id="template-linha-toldos">
         <tr class="linha-calculo-cliente" data-linha-type="toldos">
-            <td class="col-acoes-calc"><button class="btn-remover-linha btn-excluir">×</button></td>
+            <td class="col-acoes-calc">
+    <div style="display: flex; gap: 4px; justify-content: center;">
+        <button class="btn-duplicar-linha" title="Duplicar ambiente">⧉</button>
+        <button class="btn-remover-linha btn-excluir" title="Remover">×</button>
+    </div>
+</td>
             <td class="col-selecionar-calc"><input type="checkbox" class="select-linha-checkbox" title="Selecionar linha"></td>
             <td class="col-ambiente-calc"><input type="text" class="input-ambiente" placeholder="Ex: Garagem"></td>
             
@@ -742,7 +786,12 @@
 
     <template id="template-linha-amorim">
         <tr class="linha-calculo-cliente" data-linha-type="amorim">
-            <td class="col-acoes-calc"><button class="btn-remover-linha btn-excluir">×</button></td>
+            <td class="col-acoes-calc">
+    <div style="display: flex; gap: 4px; justify-content: center;">
+        <button class="btn-duplicar-linha" title="Duplicar ambiente">⧉</button>
+        <button class="btn-remover-linha btn-excluir" title="Remover">×</button>
+    </div>
+</td>
             <td class="col-selecionar-calc"><input type="checkbox" class="select-linha-checkbox" title="Selecionar linha"></td>
             <td class="col-ambiente-calc"><input type="text" class="input-ambiente" placeholder="Ex: Sala"></td>
             
@@ -770,7 +819,12 @@
 
     <template id="template-linha-toldos">
         <tr class="linha-calculo-cliente" data-linha-type="toldos">
-            <td class="col-acoes-calc"><button class="btn-remover-linha btn-excluir">×</button></td>
+            <td class="col-acoes-calc">
+    <div style="display: flex; gap: 4px; justify-content: center;">
+        <button class="btn-duplicar-linha" title="Duplicar ambiente">⧉</button>
+        <button class="btn-remover-linha btn-excluir" title="Remover">×</button>
+    </div>
+</td>
             <td class="col-selecionar-calc"><input type="checkbox" class="select-linha-checkbox" title="Selecionar linha"></td>
             <td class="col-ambiente-calc"><input type="text" class="input-ambiente" placeholder="Ex: Garagem"></td>
             
@@ -858,7 +912,12 @@
 
  <template id="template-linha-tecido">
     <tr class="linha-calculo-cliente" data-linha-type="tecido">
-        <td class="col-acoes-calc"><button class="btn-remover-linha btn-excluir">×</button></td>
+        <td class="col-acoes-calc">
+    <div style="display: flex; gap: 4px; justify-content: center;">
+        <button class="btn-duplicar-linha" title="Duplicar ambiente">⧉</button>
+        <button class="btn-remover-linha btn-excluir" title="Remover">×</button>
+    </div>
+</td>
         <td class="col-selecionar-calc"><input type="checkbox" class="select-linha-checkbox" title="Selecionar linha"></td>
         <td class="col-ambiente-calc"><input type="text" class="input-ambiente" placeholder="Ex: Sala"></td>
         <td><input type="text" inputmode="decimal" class="input-largura"></td>
@@ -883,7 +942,12 @@
 
     <template id="template-linha-toldos">
         <tr class="linha-calculo-cliente" data-linha-type="toldos">
-            <td class="col-acoes-calc"><button class="btn-remover-linha btn-excluir">×</button></td>
+            <td class="col-acoes-calc">
+    <div style="display: flex; gap: 4px; justify-content: center;">
+        <button class="btn-duplicar-linha" title="Duplicar ambiente">⧉</button>
+        <button class="btn-remover-linha btn-excluir" title="Remover">×</button>
+    </div>
+</td>
             <td class="col-selecionar-calc"><input type="checkbox" class="select-linha-checkbox" title="Selecionar linha"></td>
             <td class="col-ambiente-calc"><input type="text" class="input-ambiente" placeholder="Ex: Garagem"></td>
             <td><input type="text" inputmode="decimal" class="input-largura"></td>

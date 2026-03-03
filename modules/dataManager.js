@@ -1,6 +1,7 @@
 import { _supabase } from '../supabaseClient.js';
 import { showToast, openModal, closeModal } from './ui.js'; 
 import { can } from './permissions.js';
+export let markupPadraoGlobal = 100;
 
 let elements = {};
 let dataArrays = {}; 
@@ -144,6 +145,43 @@ function initDataManager(domElements, dataRefs) {
     setupInputFormatting('edit-frete-valor', 'currency');
     setupInputFormatting('add-instalacao-valor', 'currency');
     setupInputFormatting('edit-instalacao-valor', 'currency');
+    const inputMarkupPadrao = document.getElementById('input-markup-padrao');
+    const btnSalvarMarkupPadrao = document.getElementById('btn-salvar-markup-padrao');
+
+    if (inputMarkupPadrao && btnSalvarMarkupPadrao) {
+        getMyLojaId().then(async (lojaId) => {
+            if (!lojaId) return;
+            const { data } = await _supabase.from('configuracoes').select('markup_padrao').eq('loja_id', lojaId).maybeSingle();
+            if (data && data.markup_padrao) {
+                markupPadraoGlobal = data.markup_padrao;
+                inputMarkupPadrao.value = data.markup_padrao;
+            }
+        });
+
+        btnSalvarMarkupPadrao.addEventListener('click', async () => {
+            const lojaId = await getMyLojaId();
+            if (!lojaId) return;
+            
+            const novoValor = parseFloat(inputMarkupPadrao.value) || 100;
+            btnSalvarMarkupPadrao.textContent = "Salvando...";
+            btnSalvarMarkupPadrao.disabled = true;
+
+            const { error } = await _supabase.from('configuracoes').upsert(
+                { loja_id: lojaId, markup_padrao: novoValor }, 
+                { onConflict: 'loja_id' }
+            );
+
+            btnSalvarMarkupPadrao.textContent = "Salvar Padrão";
+            btnSalvarMarkupPadrao.disabled = false;
+
+            if (!error) {
+                markupPadraoGlobal = novoValor;
+                showToast("Markup padrão atualizado!");
+            } else {
+                showToast("Erro ao salvar markup padrão.", "error");
+            }
+        });
+    }
 }
 
 function getRenderFunction(tabela) { 

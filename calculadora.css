@@ -321,16 +321,100 @@ body.dark-mode #btn-config-taxas:hover {
 }
 .tabela-calculo th.col-acoes-calc,
 .tabela-calculo td.col-acoes-calc {
-    width: 50px !important;
-    min-width: 50px !important;
-    max-width: 50px !important;
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+}
+.btn-duplicar-linha {
+    padding: 4px 8px;
+    font-size: 14px;
+    line-height: 1;
+    font-weight: bold;
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.btn-duplicar-linha:hover {
+    background-color: #138496;
 }
 
+body.dark-mode .btn-duplicar-linha {
+    background-color: #138496;
+}
+body.dark-mode .btn-duplicar-linha:hover {
+    background-color: #117a8b;
+}
 .tabela-calculo th.col-selecionar-calc,
 .tabela-calculo td.col-selecionar-calc {
     width: 40px !important;
     min-width: 40px !important;
     max-width: 40px !important;
+}
+body.dark-mode #calculator-notes-container {
+    background: #1e1e1e;
+    border-color: #333;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+body.dark-mode #calculator-notes-container label {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode #textarea-anotacoes {
+    background-color: #333;
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+body.dark-mode #select-tipo-desconto-global {
+    background-color: #444 !important;
+    color: #e0e0e0;
+    border-color: #555 !important;
+}
+
+body.dark-mode #input-desconto-global {
+    background-color: #333;
+    color: #e0e0e0;
+    border-color: #555;
+}
+.input-group-desconto {
+    display: flex;
+    align-items: stretch;
+    width: 170px;
+    height: 32px;
+}
+
+.calculator-markups .grupo-markups .input-group-desconto {
+    display: flex !important;
+    flex-direction: row !important; 
+    align-items: stretch !important;
+    width: 170px !important; 
+}
+
+.calculator-markups .grupo-markups .input-group-desconto input {
+    width: 70% !important; 
+    border-radius: 4px 0 0 4px !important;
+    border-right: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+}
+
+.calculator-markups .grupo-markups .input-group-desconto select {
+    width: 30% !important;
+    border-radius: 0 4px 4px 0 !important;
+    background-color: #f8f9fa !important;
+    margin: 0 !important;
+    padding: 0 4px !important;
+    box-shadow: none !important;
+    border-left: 1px solid #ccc !important; 
+}
+
+body.dark-mode .calculator-markups .grupo-markups .input-group-desconto select {
+    background-color: #444 !important;
+    border-color: #555 !important;
+    color: #e0e0e0;
 }
 
 @media screen {
@@ -589,6 +673,12 @@ body.dark-mode #container-inputs-taxas input:focus {
     .calculator-markups .grupo-markups input, .calculator-markups .grupo-markups select { width: 150px; }
     #select-parcelamento-global { width: 170px; }
     #input-valor-entrada-global, #select-frete-global { width: 100px; }
+    .input-group-desconto { 
+        width: 150px; 
+    }
+     .calculator-markups .grupo-markups .input-group-desconto { 
+        width: 150px !important; 
+    }
 }
 @media (max-width: 600px) {
     .print-options-grid {
@@ -627,7 +717,8 @@ body.dark-mode #container-inputs-taxas input:focus {
     .quote-section-title-group button, .amorim-actions-header button,
     #btn-voltar-clientes, .btn-print-orcamento, #btn-config-taxas,
     .btn-close-aba, .btn-manual-save, .save-status-message, 
-    .btn-adicionar, .btn-excluir, .checkbox-wrapper-simple {
+    .btn-adicionar, .btn-excluir, .checkbox-wrapper-simple,
+    .summary-venda-container {
         display: none !important;
     }
 
@@ -675,6 +766,7 @@ body.dark-mode #container-inputs-taxas input:focus {
     .tabela-calculo td:not(.col-acoes-calc):not(.col-selecionar-calc):not(.col-hidden):not([style*="display: none"]) {
         display: table-cell !important;
     }
+
     .tabela-calculo th {
         background-color: #ddd !important;
         font-weight: bold !important;
@@ -707,7 +799,6 @@ body.dark-mode #container-inputs-taxas input:focus {
         text-align-last: left !important;
         -webkit-appearance: none;
         appearance: none;
-        text-indent: 0 !important;
         box-shadow: none !important;
         width: 100% !important;
     }
@@ -728,86 +819,126 @@ body.dark-mode #container-inputs-taxas input:focus {
         text-align: right !important;
         text-align-last: right !important;
     }
-    .tabela-calculo input::placeholder {
-        color: transparent !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
+
     .calculator-header { display: block !important; border-bottom: 2px solid #000; margin-bottom: 5px; text-align: center !important; }
     .calculator-header h2 { font-size: 18px !important; margin: 0; color: #000; text-align: center !important; }
-    
     .quote-section { border: 2px solid #000 !important; margin-bottom: 10px !important; page-break-inside: avoid; }
     .quote-section-header { background: #ccc !important; border-bottom: 1px solid #000 !important; padding: 2px 5px; }
     .quote-section-header h3 { margin: 0; font-size: 12px !important; color: #000 !important; text-align: left !important; }
-
-    .wrapper-markups { border: 1px solid #000 !important; margin-top: 5px; padding: 2px; display: flex; justify-content: center; gap: 20px; }
-    .wrapper-markups label { font-size: 9px !important; font-weight: bold; }
-    .wrapper-markups input, .wrapper-markups select { border: 1px solid #000 !important; width: 90px !important; text-align: center !important; }
-    
+    .wrapper-markups { 
+        border: none !important; 
+        margin-top: 10px !important; 
+        padding: 5px 0 !important; 
+        overflow: visible !important; 
+    }
+    .wrapper-markups .grupo-markups {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: center !important;
+        align-items: flex-end !important;
+        gap: 15px !important;
+    }
+    .wrapper-markups .grupo-markups label {
+        font-size: 10px !important;
+        color: #000 !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        margin-bottom: 2px !important;
+    }
+    .wrapper-markups .grupo-markups input, 
+    .wrapper-markups .grupo-markups select {
+        border: 1px solid #000 !important;
+        width: 110px !important; 
+        height: 22px !important; 
+        text-align: center !important;
+        box-sizing: border-box !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        padding: 2px !important;
+        font-size: 10px !important;
+        background: transparent !important;
+        border-radius: 0 !important; 
+    }
+    .wrapper-markups .grupo-markups .input-group-desconto {
+        display: flex !important;
+        flex-direction: row !important;
+        width: 110px !important; 
+        height: 22px !important;
+        border: 1px solid #000 !important; 
+        box-sizing: border-box !important;
+    }
+    .wrapper-markups .grupo-markups .input-group-desconto input {
+        border: none !important; 
+        border-right: 1px solid #000 !important; 
+        width: 70% !important; 
+        height: 100% !important;
+        margin: 0 !important;
+    }
+    .wrapper-markups .grupo-markups .input-group-desconto select {
+        border: none !important; 
+        width: 30% !important; 
+        height: 100% !important;
+        min-width: unset !important;
+        max-width: unset !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
     #calculator-summary { border: 2px solid #000 !important; margin-top: 5px; padding: 0; page-break-inside: avoid; }
     #calculator-summary h3 { background: #eee !important; margin: 0; padding: 2px; border-bottom: 1px solid #000; text-align: center !important; font-size: 12px; }
-    .summary-totals-container { border: none !important; }
-    .summary-total-box { border-right: 1px solid #000 !important; padding: 2px; text-align: center !important; }
+    .summary-totals-container { border: none !important; display: flex !important; justify-content: center !important; width: 100% !important; }
+    .summary-total-box { 
+        border: 1px solid #000 !important; 
+        padding: 5px 10px !important; 
+        text-align: center !important; 
+        min-width: 150px !important; 
+        flex: 1 !important;
+    }
     .summary-total-box span { color: #000 !important; font-weight: bold; font-size: 12px; }
+
+    #calculator-notes-container:has(#textarea-anotacoes:placeholder-shown) {
+        display: none !important;
+    }
+
+    #calculator-notes-container {
+        border: 2px solid #000 !important;
+        margin-top: 5px;
+        padding: 5px !important;
+        page-break-inside: avoid;
+        box-shadow: none !important;
+    }
+    #calculator-notes-container label {
+        font-size: 11px !important;
+        color: #000 !important;
+        margin-bottom: 2px !important;
+    }
+    #textarea-anotacoes {
+        border: none !important;
+        resize: none !important;
+        font-size: 10px !important;
+        padding: 0 !important;
+        background: transparent !important;
+        width: 100% !important;
+    }
+
     .print-hide-tecido-medidas [data-section-type="tecido"] .sessao-medidas,
     .print-hide-tecido-medidas [data-section-type="tecido"] tbody td:nth-child(4),
     .print-hide-tecido-medidas [data-section-type="tecido"] tbody td:nth-child(5) { display: none !important; }
-
     .print-hide-tecido-cortina [data-section-type="tecido"] .sessao-cortina,
     .print-hide-tecido-cortina [data-section-type="tecido"] tbody td:nth-child(6),
     .print-hide-tecido-cortina [data-section-type="tecido"] tbody td:nth-child(7) { display: none !important; }
-
     .print-hide-tecido-forro [data-section-type="tecido"] .sessao-forro,
     .print-hide-tecido-forro [data-section-type="tecido"] tbody td:nth-child(9) { display: none !important; }
-
     .print-hide-tecido-blackout [data-section-type="tecido"] .sessao-blackout,
     .print-hide-tecido-blackout [data-section-type="tecido"] tbody td:nth-child(11),
     .print-hide-tecido-blackout [data-section-type="tecido"] tbody td:nth-child(12) { display: none !important; }
-
     .print-hide-tecido-valores [data-section-type="tecido"] .sessao-valores,
     .print-hide-tecido-valores [data-section-type="tecido"] tbody td:nth-child(14),
     .print-hide-tecido-valores [data-section-type="tecido"] tbody td:nth-child(15),
     .print-hide-tecido-valores [data-section-type="tecido"] tbody td:nth-child(16),
     .print-hide-tecido-valores [data-section-type="tecido"] tbody td:nth-child(17) { display: none !important; }
-
     .print-hide-tecido-orcamento [data-section-type="tecido"] .sessao-orcamento,
     .print-hide-tecido-orcamento [data-section-type="tecido"] tbody td:nth-child(18),
     .print-hide-tecido-orcamento [data-section-type="tecido"] tbody td:nth-child(19),
     .print-hide-tecido-orcamento [data-section-type="tecido"] tbody td:nth-child(20) { display: none !important; }
-    .print-hide-amorim-cortina-medidas [data-section-type="amorim"] .sessao-medidas,
-    .print-hide-amorim-cortina-medidas [data-section-type="amorim"] tbody td:nth-child(4),
-    .print-hide-amorim-cortina-medidas [data-section-type="amorim"] tbody td:nth-child(5) { display: none !important; }
-
-    .print-hide-amorim-cortina-modelo [data-section-type="amorim"] .sessao-cortina,
-    .print-hide-amorim-cortina-modelo [data-section-type="amorim"] tbody td:nth-child(6),
-    .print-hide-amorim-cortina-modelo [data-section-type="amorim"] tbody td:nth-child(7),
-    .print-hide-amorim-cortina-modelo [data-section-type="amorim"] tbody td:nth-child(8) { display: none !important; }
-
-    .print-hide-amorim-cortina-detalhes [data-section-type="amorim"] .sessao-detalhes,
-    .print-hide-amorim-cortina-detalhes [data-section-type="amorim"] tbody td:nth-child(9),
-    .print-hide-amorim-cortina-detalhes [data-section-type="amorim"] tbody td:nth-child(10),
-    .print-hide-amorim-cortina-detalhes [data-section-type="amorim"] tbody td:nth-child(11),
-    .print-hide-amorim-cortina-detalhes [data-section-type="amorim"] tbody td:nth-child(12) { display: none !important; }
-
-    .print-hide-amorim-cortina-orcamento [data-section-type="amorim"] .sessao-valores,
-    .print-hide-amorim-cortina-orcamento [data-section-type="amorim"] .sessao-orcamento,
-    .print-hide-amorim-cortina-orcamento [data-section-type="amorim"] tbody td:nth-child(n+13) { display: none !important; }
-    .print-hide-amorim-toldo-medidas [data-section-type="toldos"] .sessao-medidas,
-    .print-hide-amorim-toldo-medidas [data-section-type="toldos"] tbody td:nth-child(4),
-    .print-hide-amorim-toldo-medidas [data-section-type="toldos"] tbody td:nth-child(5) { display: none !important; }
-
-    .print-hide-amorim-toldo-modelo [data-section-type="toldos"] .sessao-cortina,
-    .print-hide-amorim-toldo-modelo [data-section-type="toldos"] tbody td:nth-child(6),
-    .print-hide-amorim-toldo-modelo [data-section-type="toldos"] tbody td:nth-child(7),
-    .print-hide-amorim-toldo-modelo [data-section-type="toldos"] tbody td:nth-child(8) { display: none !important; }
-
-    .print-hide-amorim-toldo-detalhes [data-section-type="toldos"] .sessao-detalhes,
-    .print-hide-amorim-toldo-detalhes [data-section-type="toldos"] tbody td:nth-child(9),
-    .print-hide-amorim-toldo-detalhes [data-section-type="toldos"] tbody td:nth-child(10),
-    .print-hide-amorim-toldo-detalhes [data-section-type="toldos"] tbody td:nth-child(11),
-    .print-hide-amorim-toldo-detalhes [data-section-type="toldos"] tbody td:nth-child(12) { display: none !important; }
-
-    .print-hide-amorim-toldo-orcamento [data-section-type="toldos"] .sessao-valores,
-    .print-hide-amorim-toldo-orcamento [data-section-type="toldos"] .sessao-orcamento,
-    .print-hide-amorim-toldo-orcamento [data-section-type="toldos"] tbody td:nth-child(n+13) { display: none !important; }
 }

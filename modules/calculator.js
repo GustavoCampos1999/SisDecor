@@ -1,6 +1,7 @@
 import { showToast, openModal, closeModal } from './ui.js';
 import { _supabase } from '../supabaseClient.js'; 
 import { can } from './permissions.js';
+import { markupPadraoGlobal } from './dataManager.js';
 
 const BACKEND_API_URL = 'https://painel-de-controle-gcv.onrender.com';
 
@@ -133,7 +134,52 @@ export function initCalculator(domElements, dataArrays, clientIdRef, isDataLoade
             showToast("Configuração de impressão aplicada!");
         });
     }
+    const btnConfigTaxas = document.getElementById('btn-config-taxas');
+    if (btnConfigTaxas) {
+        btnConfigTaxas.addEventListener('click', () => {
+            if (!can('perm_calc_taxas')) { 
+                showToast("Sem permissão para editar taxas.", "error"); 
+                return; 
+            }
+            abrirModalTaxas();
+        });
+    }
 
+    const formConfigTaxas = document.getElementById('form-config-taxas');
+    if (formConfigTaxas) {
+        formConfigTaxas.addEventListener('submit', (e) => {
+            e.preventDefault();
+            aplicarEdicaoTaxas();
+        });
+    }
+
+    const btnCancelarTaxas = document.getElementById('btn-cancelar-taxas');
+    if (btnCancelarTaxas) {
+        btnCancelarTaxas.addEventListener('click', () => {
+            closeModal(document.getElementById('modal-config-taxas'));
+        });
+    }
+
+    const btnRestaurarTaxas = document.getElementById('btn-restaurar-taxas');
+    if (btnRestaurarTaxas) {
+        btnRestaurarTaxas.addEventListener('click', async () => {
+            const btnSalvar = document.querySelector('#form-config-taxas .btn-salvar');
+            if (btnSalvar) { btnSalvar.textContent = "Restaurando..."; btnSalvar.disabled = true; }
+            
+            const sucesso = await salvarNovasTaxasNoBanco({ ...TAXAS_PADRAO });
+            
+            if (btnSalvar) { btnSalvar.textContent = "Salvar Taxas"; btnSalvar.disabled = false; }
+            
+            if (sucesso) {
+                TAXAS_PARCELAMENTO = { ...TAXAS_PADRAO };
+                preencherSelectParcelamento();
+                recalcularParceladoAmorimToldos();
+                recalcularTotaisSelecionados();
+                closeModal(document.getElementById('modal-config-taxas'));
+                showToast("Taxas restauradas para o padrão!");
+            }
+        });
+    }
     const btnAddSectionTecido = document.getElementById('btn-add-section-tecido');
     const btnAddSectionAmorim = document.getElementById('btn-add-section-amorim');
     const btnAddSectionToldos = document.getElementById('btn-add-section-toldos');
@@ -222,7 +268,39 @@ if (elements.btnVoltarClientes) {
     }
     
     setupCurrencyFormatting(elements.inputValorEntradaGlobal);
+if (elements.inputDescontoGlobal) {
+        elements.inputDescontoGlobal.addEventListener('blur', (e) => {
+            let isPerc = elements.selectTipoDescontoGlobal?.value === '%';
+            let v = parseCurrencyValue(e.target.value);
+            if (isPerc) {
+                 e.target.value = v > 0 ? v.toFixed(2).replace('.', ',') : '';
+            } else {
+                 e.target.value = v > 0 ? formatadorReaisCalc.format(v) : '';
+            }
+            recalcularTotaisSelecionados();
+            setDirty();
+        });
+    }
 
+    if (elements.selectTipoDescontoGlobal) {
+        elements.selectTipoDescontoGlobal.addEventListener('change', () => {
+            let isPerc = elements.selectTipoDescontoGlobal.value === '%';
+            let v = parseCurrencyValue(elements.inputDescontoGlobal?.value);
+            if(elements.inputDescontoGlobal) {
+                if (isPerc) {
+                    elements.inputDescontoGlobal.value = v > 0 ? v.toFixed(2).replace('.', ',') : '';
+                } else {
+                    elements.inputDescontoGlobal.value = v > 0 ? formatadorReaisCalc.format(v) : '';
+                }
+            }
+            recalcularTotaisSelecionados();
+            setDirty();
+        });
+    }
+
+    if (elements.textareaAnotacoes) {
+        elements.textareaAnotacoes.addEventListener('input', setDirty);
+    }
     if (elements.btnAddAba) elements.btnAddAba.addEventListener('click', adicionarAba);
     
     if (elements.tabsContainer) {
@@ -587,7 +665,7 @@ function preencherSelectTecidosCalculadora(select, filtroCategoria = null) {
     if(valorAtual) select.value = valorAtual;
 }
 
-function adicionarLinhaTecido(tableBody, estadoLinha, isInitialLoad) {
+function adicionarLinhaTecido(tableBody, estadoLinha, isInitialLoad, insertAfterRow = null) {
     const template = document.getElementById('template-linha-tecido');
     const novaLinha = template.content.cloneNode(true).querySelector('tr');
     
@@ -637,19 +715,26 @@ function adicionarLinhaTecido(tableBody, estadoLinha, isInitialLoad) {
             setDirty();
         });
     });
+
+    const btnDuplicar = novaLinha.querySelector('.btn-duplicar-linha');
+    if (btnDuplicar) btnDuplicar.addEventListener('click', () => duplicarLinhaCalculadora(novaLinha));
+    
     novaLinha.querySelector('.btn-remover-linha').addEventListener('click', () => removerLinhaCalculadora(novaLinha));
     
     const inOutros = novaLinha.querySelector('.input-outros');
     setupCurrencyFormatting(inOutros);
+    if (insertAfterRow) {
+        insertAfterRow.after(novaLinha);
+    } else {
+        tableBody.appendChild(novaLinha);
+    }
 
-    tableBody.appendChild(novaLinha);
     if(!estadoLinha) { 
         calcularOrcamentoLinha(novaLinha); 
         if(!isInitialLoad) setDirty(); 
     }
 }
-
-function adicionarLinhaAmorim(tableBody, estadoLinha, isInitialLoad) {
+function adicionarLinhaAmorim(tableBody, estadoLinha, isInitialLoad, insertAfterRow = null) {
     const template = document.getElementById('template-linha-amorim');
     const novaLinha = template.content.cloneNode(true).querySelector('tr');
     
@@ -704,16 +789,22 @@ function adicionarLinhaAmorim(tableBody, estadoLinha, isInitialLoad) {
         recalcularTotaisSelecionados(); 
         setDirty(); 
     }));
-
-    novaLinha.querySelector('.btn-remover-linha').addEventListener('click', () => removerLinhaCalculadora(novaLinha));
+    const btnDuplicar = novaLinha.querySelector('.btn-duplicar-linha');
+    if (btnDuplicar) btnDuplicar.addEventListener('click', () => duplicarLinhaCalculadora(novaLinha));
     
-    tableBody.appendChild(novaLinha);
+    novaLinha.querySelector('.btn-remover-linha').addEventListener('click', () => removerLinhaCalculadora(novaLinha));
+    if (insertAfterRow) {
+        insertAfterRow.after(novaLinha);
+    } else {
+        tableBody.appendChild(novaLinha);
+    }
+    
     const taxa = TAXAS_PARCELAMENTO[elements.selectParcelamentoGlobal?.value || 'DÉBITO'] || 0;
     calcularParceladoLinhaAmorim(novaLinha, taxa);
     if(!estadoLinha && !isInitialLoad) setDirty();
 }
 
-function adicionarLinhaToldos(tableBody, estadoLinha, isInitialLoad) {
+function adicionarLinhaToldos(tableBody, estadoLinha, isInitialLoad, insertAfterRow = null) {
     const template = document.getElementById('template-linha-toldos');
     const novaLinha = template.content.cloneNode(true).querySelector('tr');
     
@@ -769,12 +860,65 @@ function adicionarLinhaToldos(tableBody, estadoLinha, isInitialLoad) {
         recalcularTotaisSelecionados(); 
         setDirty(); 
     }));
+    const btnDuplicar = novaLinha.querySelector('.btn-duplicar-linha');
+    if (btnDuplicar) btnDuplicar.addEventListener('click', () => duplicarLinhaCalculadora(novaLinha));
     
     novaLinha.querySelector('.btn-remover-linha').addEventListener('click', () => removerLinhaCalculadora(novaLinha));
-    tableBody.appendChild(novaLinha);
+    if (insertAfterRow) {
+        insertAfterRow.after(novaLinha);
+    } else {
+        tableBody.appendChild(novaLinha);
+    }
+    
     const taxa = TAXAS_PARCELAMENTO[elements.selectParcelamentoGlobal?.value || 'DÉBITO'] || 0;
     calcularParceladoLinhaAmorim(novaLinha, taxa);
     if(!estadoLinha && !isInitialLoad) setDirty();
+}
+function duplicarLinhaCalculadora(linhaOrigem) {
+    const type = linhaOrigem.dataset.linhaType;
+    const tableBody = linhaOrigem.closest('tbody');
+
+    let estadoLinha = {
+        ambiente: linhaOrigem.querySelector('.input-ambiente')?.value,
+        largura: linhaOrigem.querySelector('.input-largura')?.value,
+        altura: linhaOrigem.querySelector('.input-altura')?.value,
+        selecionado: linhaOrigem.querySelector('.select-linha-checkbox')?.checked,
+        observacao: linhaOrigem.querySelector('.input-observacao')?.value
+    };
+
+    if (type === 'tecido') {
+        estadoLinha.franzCortina = linhaOrigem.querySelector('.select-franzCortina')?.value;
+        estadoLinha.codTecidoCortina = linhaOrigem.querySelector('.select-codTecidoCortina')?.value;
+        estadoLinha.codTecidoForro = linhaOrigem.querySelector('.select-codTecidoForro')?.value;
+        estadoLinha.franzBlackout = linhaOrigem.querySelector('.select-franzBlackout')?.value;
+        estadoLinha.codTecidoBlackout = linhaOrigem.querySelector('.select-codTecidoBlackout')?.value;
+        estadoLinha.confecaoTexto = linhaOrigem.querySelector('.select-confecao')?.value;
+        estadoLinha.trilhoTexto = linhaOrigem.querySelector('.select-trilho')?.value;
+        estadoLinha.instalacao = linhaOrigem.querySelector('.select-instalacao')?.value;
+        estadoLinha.outros = linhaOrigem.querySelector('.input-outros')?.value;
+
+        adicionarLinhaTecido(tableBody, estadoLinha, false, linhaOrigem);
+    } else {
+        estadoLinha.modelo_cortina = linhaOrigem.querySelector('.select-modelo-cortina')?.value;
+        estadoLinha.modelo_toldo = linhaOrigem.querySelector('.select-modelo-toldo')?.value;
+        estadoLinha.codigo_tecido = linhaOrigem.querySelector('.input-cod-tecido')?.value;
+        estadoLinha.colecao = linhaOrigem.querySelector('.input-colecao')?.value;
+        estadoLinha.cor_acessorios = linhaOrigem.querySelector('.select-cor-acessorios')?.value;
+        estadoLinha.comando = linhaOrigem.querySelector('.select-comando')?.value;
+        estadoLinha.lado_comando = linhaOrigem.querySelector('.select-lado-comando')?.value;
+        estadoLinha.altura_comando = (estadoLinha.comando === 'MOTORIZADO') ? linhaOrigem.querySelector('.select-altura-comando-motor')?.value : linhaOrigem.querySelector('.input-altura-comando-manual')?.value;
+        estadoLinha.valor_manual = linhaOrigem.querySelector('.input-valor-manual')?.value;
+        estadoLinha.instalacao = linhaOrigem.querySelector('.select-instalacao')?.value;
+        estadoLinha.outros = linhaOrigem.querySelector('.input-outros')?.value;
+
+        if (type === 'amorim') {
+            adicionarLinhaAmorim(tableBody, estadoLinha, false, linhaOrigem);
+        } else if (type === 'toldos') {
+            adicionarLinhaToldos(tableBody, estadoLinha, false, linhaOrigem);
+        }
+    }
+    setDirty();
+    recalcularTotaisSelecionados();
 }
 function recalcularTodasLinhas() {
     document.querySelectorAll('#quote-sections-container .linha-calculo-cliente[data-linha-type="tecido"]').forEach(l => calcularOrcamentoLinha(l));
@@ -821,20 +965,35 @@ function recalcularTotaisSelecionados() {
 
     const frete = parseFloat(elements.selectFreteGlobal?.value) || 0;
     const entrada = parseCurrencyValue(elements.inputValorEntradaGlobal?.value);
+    let isPerc = elements.selectTipoDescontoGlobal?.value === '%';
+    let rawDesconto = elements.inputDescontoGlobal?.value || '';
+    let descontoVal = parseCurrencyValue(rawDesconto);
     
     let totalFinalSelecionado = 0, parceladoFinal = 0;
     
     totalGeral += frete;
 
     if (algumSelect) {
-        totalFinalSelecionado = totalSelecionado + frete;
-        let baseParcelar = Math.max(0, (totalSelecionado - totalInstalacao) - entrada); 
+        let totalDesconto = 0;
+        if (isPerc) {
+            totalDesconto = totalSelecionado * (descontoVal / 100);
+        } else {
+            totalDesconto = Math.min(descontoVal, totalSelecionado); 
+        }
+
+        totalFinalSelecionado = Math.max(0, (totalSelecionado + frete) - totalDesconto);
+        
+        let baseParcelar = Math.max(0, (totalSelecionado - totalInstalacao - totalDesconto) - entrada); 
         parceladoFinal = (baseParcelar * (1 + taxa)) + frete + totalInstalacao;
     }
 
     if (elements.summaryContainer) {
         elements.summaryContainer.style.display = (temLinhas || algumSelect) ? 'block' : 'none';
         
+        if (elements.notesContainer) {
+            elements.notesContainer.style.display = (temLinhas || algumSelect) ? 'block' : 'none';
+        }
+
         if (elements.summaryTotalGeral) {
             elements.summaryTotalGeral.textContent = formatadorReaisCalc.format(totalGeral);
         }
@@ -1002,7 +1161,7 @@ async function carregarEstadoCalculadora(clientId) {
         
         if (res.status === 404) {
             estadoAbas = [{ nome: "Orçamento 1", sections: {}, venda_realizada: false }];
-            if(elements.calculatorMarkupInput) elements.calculatorMarkupInput.value = '100';
+            if(elements.calculatorMarkupInput) elements.calculatorMarkupInput.value = markupPadraoGlobal;
             printSettings = {
         tecido: { medidas: true, cortina: true, forro: true, blackout: true, valores: true, orcamento: true },
         amorim_cortina: { medidas: true, modelo: true, detalhes: true, orcamento: true },
@@ -1011,10 +1170,13 @@ async function carregarEstadoCalculadora(clientId) {
         } else {
             const data = await res.json();
             estadoAbas = data.abas || [{ nome: "Orçamento 1", sections: {}, venda_realizada: false }];
-            if(elements.calculatorMarkupInput) elements.calculatorMarkupInput.value = data.markup || '100';
+            if(elements.calculatorMarkupInput) elements.calculatorMarkupInput.value = data.markup || markupPadraoGlobal;
             if(elements.selectParcelamentoGlobal) elements.selectParcelamentoGlobal.value = data.parcelamento || 'DÉBITO';
             if(elements.selectFreteGlobal) elements.selectFreteGlobal.value = data.frete || '0';
             if(elements.inputValorEntradaGlobal) elements.inputValorEntradaGlobal.value = data.entrada || '';
+            if(elements.inputDescontoGlobal) elements.inputDescontoGlobal.value = data.desconto || '';
+            if(elements.selectTipoDescontoGlobal) elements.selectTipoDescontoGlobal.value = data.tipo_desconto || 'R$';
+            if(elements.textareaAnotacoes) elements.textareaAnotacoes.value = data.anotacoes || '';
         }
         renderizarTabs();
         ativarAba(0, true);
@@ -1042,7 +1204,10 @@ async function salvarEstadoCalculadora(clientId) {
         markup: elements.calculatorMarkupInput?.value,
         parcelamento: elements.selectParcelamentoGlobal?.value,
         frete: elements.selectFreteGlobal?.value,
-        entrada: elements.inputValorEntradaGlobal?.value
+        entrada: elements.inputValorEntradaGlobal?.value,
+        desconto: elements.inputDescontoGlobal?.value,
+        tipo_desconto: elements.selectTipoDescontoGlobal?.value,
+        anotacoes: elements.textareaAnotacoes?.value
     };
 
     try {

@@ -1570,6 +1570,104 @@ body.dark-mode #form-config-print .checkbox-wrapper-simple {
 body.dark-mode #form-config-print .checkbox-wrapper-simple label {
     color: #fff !important;
 }
+
+.config-markup-secao {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    padding: 30px !important;
+    max-width: 700px;
+    margin: 20px auto !important; 
+    border: 1px solid #e9ecef !important;
+}
+
+.markup-config-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    margin-bottom: 20px;
+}
+
+.markup-config-group label {
+    font-weight: bold;
+    color: #333;
+    font-size: 15px;
+    margin: 0;
+}
+
+.markup-config-group input[type="number"] {
+    width: 100px;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #931011;
+}
+
+.markup-config-group input[type="number"]:focus {
+    border-color: #931011;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(147, 16, 17, 0.1);
+}
+
+.markup-config-group .btn-salvar {
+    padding: 5px 5px;
+    font-size: 13px;
+}
+
+.markup-desc {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.6;
+    background: #fff3cd;
+    padding: 15px;
+    border-left: 4px solid #ffc107;
+    border-radius: 4px;
+}
+
+body.dark-mode .config-markup-secao {
+    background-color: #252525;
+    border-color: #333 !important;
+}
+
+body.dark-mode .markup-config-group {
+    background: #1e1e1e;
+    border-color: #333;
+}
+
+body.dark-mode .markup-config-group label {
+    color: #e0e0e0;
+}
+
+body.dark-mode .markup-config-group input[type="number"] {
+    background-color: #333;
+    border-color: #555;
+    color: #ff6b6b;
+}
+
+body.dark-mode .markup-desc {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ccc;
+    border-left-color: #e0a800;
+}
+
+@media (max-width: 600px) {
+    .markup-config-group {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+    .markup-config-group input[type="number"] {
+        width: 100%;
+    }
+}
+
 @media (max-width: 768px) {
     header {
         flex-direction: column;
@@ -1647,6 +1745,37 @@ body.dark-mode #form-config-print .checkbox-wrapper-simple label {
     }
     .amorim-table-scroll {
         max-height: 300px; 
+    }
+    #subscription-overlay > div {
+        padding: 25px 15px !important;
+        width: 95% !important;
+    }
+    #subscription-overlay h1 {
+        font-size: 22px !important;
+    }
+    #subscription-overlay p {
+        font-size: 14px !important;
+        margin-bottom: 20px !important;
+    }
+    #subscription-overlay > div > div:first-of-type {
+        flex-direction: column !important;
+        gap: 20px !important;
+    }
+    #subscription-overlay > div > div:first-of-type > div {
+        transform: none !important; 
+        padding: 20px !important;
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    #subscription-overlay > div > div:first-of-type > div > div[style*="position: absolute"] {
+        font-size: 11px !important;
+        padding: 4px 10px !important;
+        top: -12px !important;
+    }
+    #subscription-overlay > div > div:last-of-type {
+        margin-top: 20px !important;
+        padding-top: 15px !important;
     }
 }
 
