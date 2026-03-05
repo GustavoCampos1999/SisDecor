@@ -1,5 +1,5 @@
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; padding: 20px; margin: 0; }
-.container { max-width: 1200px; margin: 0 auto; background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+.container { max-width: 1250px; margin: 0 auto; background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
 
 header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
 h1 { color: #e06c6e; margin: 0; font-size: 24px; }
@@ -8,36 +8,44 @@ h1 { color: #e06c6e; margin: 0; font-size: 24px; }
 .btn-voltar:hover { background: #555; }
 
 table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-th, td { border-bottom: 1px solid #333; padding: 15px; text-align: left; vertical-align: middle; }
-th { background: #252525; color: #aaa; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+th, td { border-bottom: 1px solid #333; padding: 12px 15px; text-align: left; vertical-align: middle; }
+th { background: #252525; color: #888; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
 
-tbody tr { cursor: pointer; transition: background 0.2s; }
-tbody tr:hover { background: #2a2a2a; }
+tbody tr { cursor: pointer; transition: background 0.15s; }
+tbody tr:hover { background: #252525; }
 
-.badge { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; display: inline-block; min-width: 80px; text-align: center; }
-.badge-teste { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid #ffc107; }
-.badge-ativo { background: rgba(40, 167, 69, 0.2); color: #28a745; border: 1px solid #28a745; }
-.badge-suspenso { background: rgba(220, 53, 69, 0.2); color: #dc3545; border: 1px solid #dc3545; }
+.badge { padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; display: inline-block; text-align: center; }
+.badge-teste { background: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); }
+.badge-ativo { background: rgba(40, 167, 69, 0.1); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.3); }
+.badge-suspenso { background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.3); }
 
 .actions-group { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
-button.action-btn { cursor: pointer; padding: 6px 12px; border-radius: 4px; border: none; font-weight: bold; font-size: 12px; transition: opacity 0.2s; color: white; z-index: 10; position: relative; }
-button.action-btn:hover { opacity: 0.8; transform: translateY(-1px); }
+
+button.action-btn { cursor: pointer; padding: 7px 14px; border-radius: 6px; border: none; font-weight: bold; font-size: 12px; transition: 0.2s; color: white; display: flex; align-items: center; gap: 5px; }
+button.action-btn:hover { filter: brightness(1.2); transform: translateY(-1px); }
 
 .btn-ativar { background: #28a745; }
-.btn-bloquear { background: #dc3545; } 
-.btn-desbloquear { background: #ffc107; color: #333 !important; } 
-.btn-renovar { background: #007bff; }
-.btn-edit-dias { background: none; border: 1px solid #555; color: #aaa !important; padding: 4px 8px; font-size: 14px; } 
-.btn-edit-dias:hover { background: #333; color: #fff !important; }
+.btn-desbloquear { background: #ffc107; color: #121212 !important; }
+
+.dropdown { position: relative; display: inline-block; }
+.btn-more { background: #333; border: 1px solid #444; color: #fff; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+.btn-more:hover { background: #444; border-color: #666; }
+
+.dropdown-content { 
+    display: none; position: absolute; right: 0; background: #2a2a2a; min-width: 160px; 
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.6); z-index: 100; border-radius: 8px; border: 1px solid #444; overflow: hidden;
+}
+.dropdown:hover .dropdown-content { display: block; }
+
+.action-btn-link { color: #ccc; padding: 12px 15px; text-decoration: none; display: block; font-size: 13px; transition: 0.2s; }
+.action-btn-link:hover { background: #333; color: #fff; }
+.action-btn-link.danger { color: #e06c6e; border-top: 1px solid #383838; }
+.action-btn-link.danger:hover { background: #422a2a; color: #ff8a8a; }
+
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
+.modal-box { background: #1e1e1e; border: 1px solid #444; width: 90%; max-width: 450px; padding: 30px; border-radius: 12px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.modal-close { position: absolute; top: 15px; right: 20px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
+.modal-title { margin-top: 0; color: #e06c6e; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px; font-size: 20px; }
 
 .loading { text-align: center; padding: 40px; color: #888; font-style: italic; }
-.info-text { font-size: 12px; color: #888; display: block; margin-top: 4px; }
-
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
-.modal-box { background: #1e1e1e; border: 1px solid #444; width: 90%; max-width: 500px; padding: 25px; border-radius: 10px; position: relative; }
-.modal-close { position: absolute; top: 15px; right: 20px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
-.modal-title { margin-top: 0; color: #e06c6e; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
-.users-list { max-height: 300px; overflow-y: auto; }
-.user-item { padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-.user-item:last-child { border-bottom: none; }
-.user-role { font-size: 11px; background: #333; padding: 2px 6px; border-radius: 4px; color: #aaa; }
+.info-text { font-size: 11px; color: #666; display: block; margin-top: 4px; }
