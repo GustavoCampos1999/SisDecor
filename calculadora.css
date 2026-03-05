@@ -352,6 +352,31 @@ body.dark-mode .btn-duplicar-linha:hover {
     min-width: 40px !important;
     max-width: 40px !important;
 }
+#calculator-notes-container {
+    margin-top: 20px;
+    padding: 15px 25px;
+    background: #fff; 
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+#calculator-notes-container label {
+    font-weight: bold;
+    font-size: 14px;
+    color: #555;
+    display: block;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+#textarea-anotacoes {
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    box-sizing: border-box;
+}
 body.dark-mode #calculator-notes-container {
     background: #1e1e1e;
     border-color: #333;

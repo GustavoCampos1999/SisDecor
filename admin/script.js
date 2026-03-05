@@ -69,7 +69,8 @@ function renderizarTabela(lojas, perfis) {
     lojas.forEach(loja => {
         const dono = perfis.find(p => p.loja_id === loja.id && (p.role === 'admin' || !p.role)) || {};
         const nomeLoja = loja.nome || loja.nome_empresa || dono.nome_usuario || 'Loja sem nome';
-        const emailDono = dono.email || 'Email não encontrado';
+        
+        const emailDono = dono.email || dono.email_usuario || 'Email não encontrado'; 
 
         const tr = document.createElement('tr');
         
@@ -81,7 +82,6 @@ function renderizarTabela(lojas, perfis) {
         if (dataFim) diasRestantes = Math.ceil((dataFim - agora) / (1000 * 60 * 60 * 24));
 
         let statusBadge = '';
-        
         if (loja.status_assinatura === 'suspenso') statusBadge = '<span class="badge badge-suspenso">BLOQUEADO</span>';
         else if (dataFim && diasRestantes < 0) statusBadge = '<span class="badge badge-suspenso">VENCEU</span>';
         else if (loja.status_assinatura === 'teste') statusBadge = '<span class="badge badge-teste">TESTE</span>';
@@ -130,6 +130,40 @@ function renderizarTabela(lojas, perfis) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('tabela-lojas').style.display = 'table';
 }
+
+window.abrirModalFuncionarios = (lojaId, nomeLoja) => {
+    document.getElementById('modal-funcionarios').style.display = 'flex';
+    const listaDiv = document.getElementById('lista-funcionarios');
+    listaDiv.innerHTML = '';
+
+    const funcionarios = perfisCache.filter(p => p.loja_id == lojaId);
+    
+    const dono = funcionarios.find(p => p.role === 'admin' || !p.role) || {};
+    const telefoneDono = dono.telefone || dono.whatsapp || 'Telefone não cadastrado';
+
+    document.querySelector('.modal-title').innerHTML = `
+        Equipe: ${nomeLoja}<br>
+        <span style="font-size: 13px; color: #888; font-weight: normal;">📞 Contato: ${telefoneDono}</span>
+    `;
+
+    if (funcionarios.length === 0) {
+        listaDiv.innerHTML = '<p style="text-align:center;color:#666">Nenhum funcionário encontrado.</p>';
+        return;
+    }
+
+    funcionarios.forEach(f => {
+        const div = document.createElement('div');
+        div.className = 'user-item';
+        div.innerHTML = `
+            <div>
+                <strong style="color:#fff">${f.nome_usuario || 'Sem nome'}</strong><br>
+                <small style="color:#888">${f.email || f.email_usuario || 'Email oculto'}</small>
+            </div>
+            <span class="user-role">${f.role || 'Vendedor'}</span>
+        `;
+        listaDiv.appendChild(div);
+    });
+};
 
 function prepararAcao(id, tipo) {
     acaoPendente = { id, tipo };
