@@ -61,9 +61,10 @@ function renderizarTabela(lojas, perfis) {
     const agora = new Date();
 
     lojas.forEach(loja => {
-        const dono = perfis.find(p => p.loja_id == loja.id && (p.role === 'admin' || !p.role)) || {};
+        const dono = perfis.find(p => p.loja_id == loja.id && p.role === 'admin') || 
+             perfis.find(p => p.loja_id == loja.id) || {};
         const nomeLoja = loja.nome || loja.nome_empresa || dono.nome_usuario || 'Loja sem nome';
-        const emailDono = dono.email || dono.email_usuario || 'Email não encontrado'; 
+        const emailDono = dono.email || dono.email_usuario || dono.user_email || dono.email_login || 'Email não encontrado';
 
         let dataFim;
         if (loja.status_assinatura === 'teste') dataFim = new Date(loja.data_fim_teste);
@@ -133,8 +134,8 @@ window.abrirModalFuncionarios = (lojaId, nomeLoja) => {
     listaDiv.innerHTML = '';
 
     const funcionarios = perfisCache.filter(p => p.loja_id == lojaId);
-    const dono = funcionarios.find(p => p.role === 'admin' || !p.role) || {};
-    const tel = dono.telefone || dono.whatsapp || 'Não informado';
+    const dono = funcionarios.find(p => p.role === 'admin') || funcionarios[0] || {};
+    const tel = dono.telefone || dono.whatsapp || dono.celular || dono.contato || 'Não informado';
 
     document.querySelector('.modal-title').innerHTML = `
         ${nomeLoja}<br>
@@ -239,3 +240,5 @@ async function executarAcaoReal(dados) {
         alert("Erro na operação: " + err.message);
     }
 }
+
+console.log("Dados dos Perfis:", perfis);
