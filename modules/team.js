@@ -54,14 +54,6 @@ export function initTeamManager(domElements) {
     if (elements.btnCancelarRole) elements.btnCancelarRole.addEventListener('click', () => closeModal(elements.modalRoleEditor));
     if (elements.formRoleEditor) elements.formRoleEditor.addEventListener('submit', handleSaveRole);
     checkAdminRole();
-    document.addEventListener('permissionsUpdated', () => {
-        if (elements.viewMembros && elements.viewMembros.style.display !== 'none') {
-            carregarEquipe();
-        } else if (elements.viewCargos && elements.viewCargos.style.display !== 'none') {
-            carregarCargos();
-        }
-        checkAdminRole(); 
-    });
 }
 
 function switchSubTab(tab) {
@@ -121,10 +113,7 @@ function renderizarTabelaEquipe(lista) {
 
     lista.forEach(membro => {
         const tr = document.createElement('tr');
-        let roleDisplay = membro.role_custom_name;
-if (!roleDisplay) {
-    roleDisplay = (membro.role === 'admin') ? 'Administrador' : 'Nenhum Cargo';
-}
+        const roleDisplay = membro.role_custom_name || membro.role || 'Vendedor';
         
         let botoes = '';
         if (membro.role !== 'admin') {
@@ -164,7 +153,7 @@ async function preencherSelectCargos() {
         const roles = await response.json();
         
         select.innerHTML = '';
-        select.appendChild(new Option("Nenhum Cargo", ""));
+        
         if (roles.length === 0) {
              select.innerHTML = '<option value="">Nenhum cargo criado</option>';
         }
@@ -231,15 +220,11 @@ async function handleSaveMembro(e) {
     btn.textContent = "Salvando...";
     
     const formData = new FormData(elements.formAddMembro);
-    
-    let roleValue = formData.get('role');
-    let roleIdParsed = roleValue ? parseInt(roleValue) : null;
-
     const dados = {
         nome: formData.get('nome'),
         email: formData.get('email'), 
         senha: formData.get('senha'),
-        role_id: roleIdParsed 
+        role_id: formData.get('role')
     };
     
     const selectRole = elements.formAddMembro.querySelector('select[name="role"]');
@@ -267,20 +252,15 @@ async function handleSaveMembro(e) {
             body: JSON.stringify(dados)
         });
 
-        if (!response.ok) {
-            const errJson = await response.json();
-            throw new Error(errJson.erro || "Erro na operação");
-        }
-        
+        if (!response.ok) throw new Error("Erro na operação");
         showToast(membroEmEdicao ? "Atualizado!" : "Criado!");
         closeModal(elements.modalAddMembro);
         carregarEquipe();
     } catch (error) {
-        console.error(error);
-        showToast(error.message || "Erro ao salvar.", "error");
+        showToast("Erro ao salvar.", "error");
     } finally {
         btn.disabled = false;
-        btn.textContent = "Salvar"; 
+        btn.textContent = "Salvar";
     }
 }
 

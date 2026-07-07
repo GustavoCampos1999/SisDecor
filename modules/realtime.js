@@ -3,8 +3,7 @@ import { carregarClientes } from './crm.js';
 import { loadPermissions } from './permissions.js';
 import { showToast } from './ui.js';
 
-let systemChannel = null;
-let dataChannel = null;
+let realtimeChannel = null;
 
 export async function initRealtime() {
     const { data: { user } } = await _supabase.auth.getUser();
@@ -21,46 +20,41 @@ export async function initRealtime() {
     const lojaId = perfil.loja_id;
     console.log("Iniciando Realtime para Loja:", lojaId);
 
-    if (systemChannel) _supabase.removeChannel(systemChannel);
-    if (dataChannel) _supabase.removeChannel(dataChannel);
+    if (realtimeChannel) _supabase.removeChannel(realtimeChannel);
 
-    systemChannel = _supabase.channel('canal-sistema')
+    realtimeChannel = _supabase.channel('mudancas-sistema')
+        
         .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'clientes', filter: `loja_id=eq.${lojaId}` },
             (payload) => {
-                console.log('Realtime: Clientes atualizado');
+                console.log('Mudança em Clientes:', payload);
                 carregarClientes(); 
             }
         )
+
         .on(
             'postgres_changes',
             { event: 'UPDATE', schema: 'public', table: 'perfis', filter: `user_id=eq.${user.id}` },
-            async () => {
-                console.log('Realtime: Permissões alteradas');
+            async (payload) => {
+                console.log('Minhas permissões mudaram:', payload);
                 showToast('Suas permissões foram alteradas.', 'warning');
                 await loadPermissions(); 
             }
         )
+
         .on(
             'postgres_changes',
             { event: 'UPDATE', schema: 'public', table: 'loja_roles', filter: `loja_id=eq.${lojaId}` },
-            async () => {
-                console.log('Realtime: Cargos alterados');
+            async (payload) => {
+                console.log('Definição de cargos mudou:', payload);
                 await loadPermissions();
             }
-        )
-        .subscribe();
-    dataChannel = _supabase.channel('canal-dados');
-
-    const tabelasDados = [
-        'tecidos', 'confeccao', 'trilho', 'frete', 'instalacao',
-        'amorim_modelos_cortina', 'amorim_cores_cortina',
-        'amorim_modelos_toldo', 'amorim_cores_toldo'
-    ];
+        );
+    const tabelasDados = ['tecidos', 'confeccao', 'trilho', 'frete', 'instalacao'];
 
     tabelasDados.forEach(tabela => {
-        dataChannel.on(
+        realtimeChannel.on(
             'postgres_changes',
             { 
                 event: '*', 
@@ -69,13 +63,15 @@ export async function initRealtime() {
                 filter: `loja_id=eq.${lojaId}` 
             },
             (payload) => {
-                console.log(`Realtime: ${tabela} alterada.`);
+                console.log(`Mudança detectada em ${tabela}:`, payload);
                 document.dispatchEvent(new CustomEvent('dadosBaseAlterados'));
             }
         );
     });
 
-    dataChannel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') console.log('Realtime Dados: Conectado!');
+    realtimeChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+            console.log('Conectado ao Realtime (Completo)!');
+        }
     });
 }

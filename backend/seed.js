@@ -16,7 +16,7 @@ async function criarTabelas() {
         cnpj TEXT UNIQUE,
         telefone TEXT,
         subscription_status TEXT,
-        trial_ends_at TIMESTAMPTZ, --
+        trial_ends_at TIMESTAMPTZ, -- <-- CORRIGIDO AQUI
         created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
 

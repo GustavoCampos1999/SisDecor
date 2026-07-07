@@ -42,22 +42,22 @@ async function initAdmin() {
 
 async function carregarDados() {
     try {
-        const { data: lojas, error: errLojas } = await _supabase.from('lojas').select('*').order('created_at', {ascending: false});
-        const { data: perfis, error: errPerfis } = await _supabase.from('perfis').select('*');
+        const { data: lojas, error: errLojas } = await _supabase
+            .from('lojas')
+            .select('*')
+            .order('created_at', {ascending: false});
 
-        if(errLojas || errPerfis) throw new Error("Erro ao carregar dados do banco.");
+        const { data: perfis, error: errPerfis } = await _supabase
+            .from('perfis')
+            .select('*');
 
-        if (perfis && perfis.length > 0) {
-            console.log("=== DIAGNÓSTICO DE DADOS ===");
-            console.log("Colunas encontradas no perfil:", Object.keys(perfis[0]));
-            console.log("Exemplo de um perfil:", perfis[0]);
-        }
+        if(errLojas || errPerfis) throw new Error("Erro ao buscar dados.");
 
         perfisCache = perfis; 
         renderizarTabela(lojas, perfis);
+
     } catch (error) {
-        console.error(error);
-        alert("Erro técnico: " + error.message);
+        alert(error.message);
     }
 }
 
@@ -67,64 +67,59 @@ function renderizarTabela(lojas, perfis) {
     const agora = new Date();
 
     lojas.forEach(loja => {
-        const dono = perfis.find(p => p.loja_id == loja.id && (p.role === 'admin' || !p.role)) || 
-                     perfis.find(p => p.loja_id == loja.id) || {};
-        
+        const dono = perfis.find(p => p.loja_id === loja.id && (p.role === 'admin' || !p.role)) || {};
         const nomeLoja = loja.nome || loja.nome_empresa || dono.nome_usuario || 'Loja sem nome';
-        
-        const emailDono = dono.email || dono.email_usuario || dono.user_email || 'Email não encontrado';
+        const emailDono = dono.email || 'Email não encontrado';
 
+        const tr = document.createElement('tr');
+        
         let dataFim;
         if (loja.status_assinatura === 'teste') dataFim = new Date(loja.data_fim_teste);
         else if (loja.status_assinatura === 'ativo') dataFim = new Date(loja.data_expiracao_assinatura);
         
-        const diasRestantes = dataFim ? Math.ceil((dataFim - agora) / (1000 * 60 * 60 * 24)) : 0;
-        const estaVencido = dataFim && diasRestantes < 0;
+        let diasRestantes = 0;
+        if (dataFim) diasRestantes = Math.ceil((dataFim - agora) / (1000 * 60 * 60 * 24));
 
         let statusBadge = '';
-        if (loja.status_assinatura === 'suspenso') statusBadge = '<span class="badge badge-suspenso">Bloqueado</span>';
-        else if (estaVencido) statusBadge = '<span class="badge badge-suspenso">Vencido</span>';
-        else if (loja.status_assinatura === 'teste') statusBadge = '<span class="badge badge-teste">Período Teste</span>';
-        else statusBadge = '<span class="badge badge-ativo">Assinatura Ativa</span>';
+        
+        if (loja.status_assinatura === 'suspenso') statusBadge = '<span class="badge badge-suspenso">BLOQUEADO</span>';
+        else if (dataFim && diasRestantes < 0) statusBadge = '<span class="badge badge-suspenso">VENCEU</span>';
+        else if (loja.status_assinatura === 'teste') statusBadge = '<span class="badge badge-teste">TESTE</span>';
+        else statusBadge = '<span class="badge badge-ativo">ATIVO</span>';
 
-        let botaoPrincipalHtml = '';
+        const dataFormatada = dataFim ? dataFim.toLocaleDateString() : '-';
+        const corDias = diasRestantes < 0 ? '#dc3545' : '#28a745';
+
+        let btnStatusHtml = '';
         if (loja.status_assinatura === 'suspenso') {
-            botaoPrincipalHtml = `<button class="action-btn btn-desbloquear" data-id="${loja.id}" data-action="desbloquear">🔓 Desbloquear</button>`;
+            btnStatusHtml = `<button class="action-btn btn-desbloquear" data-id="${loja.id}" data-action="desbloquear">Desbloquear</button>`;
         } else {
-            const label = estaVencido ? "Ativar Plano" : "Renovar +30d";
-            botaoPrincipalHtml = `<button class="action-btn btn-ativar" data-id="${loja.id}" data-action="ativar">⚡ ${label}</button>`;
+            btnStatusHtml = `<button class="action-btn btn-bloquear" data-id="${loja.id}" data-action="bloquear">Bloq</button>`;
         }
 
-        const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><strong>${nomeLoja}</strong><br><span class="info-text">ID: ${loja.id}</span></td>
             <td>${emailDono}</td>
-            <td><code style="color:#aaa">${loja.cnpj || '---'}</code></td>
+            <td>${loja.cnpj || '---'}</td>
             <td>${statusBadge}</td>
             <td>
-                <span style="font-weight:500">${dataFim ? dataFim.toLocaleDateString() : '-'}</span><br>
-                <small style="color:${estaVencido ? '#e06c6e' : '#28a745'}">${dataFim ? diasRestantes + ' dias' : 'Sem validade'}</small>
+                ${dataFormatada} 
+                <button class="action-btn btn-edit-dias" data-id="${loja.id}" data-action="editar-dias" title="Editar validade">✎</button>
+                <br>
+                <small style="color:${corDias}">${dataFim ? diasRestantes + ' dias' : ''}</small>
             </td>
             <td>
                 <div class="actions-group">
-                    ${botaoPrincipalHtml}
-                    <div class="dropdown">
-                        <button class="btn-more">⋮</button>
-                        <div class="dropdown-content">
-                            <a href="#" class="action-btn-link" data-id="${loja.id}" data-action="editar-dias">📅 Ajustar Validade</a>
-                            ${loja.status_assinatura !== 'suspenso' ? 
-                                `<a href="#" class="action-btn-link danger" data-id="${loja.id}" data-action="bloquear">🚫 Bloquear Loja</a>` : ''}
-                        </div>
-                    </div>
+                    <button class="action-btn btn-ativar" data-id="${loja.id}" data-action="ativar">Ativar</button>
+                    ${btnStatusHtml}
                 </div>
             </td>
         `;
         
-        tr.querySelectorAll('[data-action]').forEach(el => {
-            el.addEventListener('click', (e) => {
-                e.preventDefault();
+        tr.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
                 e.stopPropagation(); 
-                prepararAcao(el.dataset.id, el.dataset.action);
+                prepararAcao(e.target.dataset.id, e.target.dataset.action);
             });
         });
 
@@ -136,23 +131,104 @@ function renderizarTabela(lojas, perfis) {
     document.getElementById('tabela-lojas').style.display = 'table';
 }
 
+function prepararAcao(id, tipo) {
+    acaoPendente = { id, tipo };
+    
+    const modalConfirm = document.getElementById('modal-confirmacao');
+    const titulo = document.getElementById('modal-confirm-titulo');
+    const texto = document.getElementById('modal-confirm-texto');
+    const btn = document.getElementById('btn-confirm-acao');
+
+    if (tipo === 'ativar') {
+        titulo.textContent = "Ativar Loja";
+        titulo.style.color = "#28a745";
+        texto.innerHTML = "Isso liberará o acesso por <strong>30 dias</strong> a partir de hoje.<br>Confirmar pagamento?";
+        btn.textContent = "Ativar";
+        btn.className = "action-btn btn-ativar";
+        modalConfirm.style.display = 'flex';
+    } 
+    else if (tipo === 'bloquear') {
+        titulo.textContent = "Bloquear Acesso";
+        titulo.style.color = "#dc3545";
+        texto.innerHTML = "O usuário não conseguirá mais fazer login.<br>Deseja continuar?";
+        btn.textContent = "Bloquear";
+        btn.className = "action-btn btn-bloquear";
+        modalConfirm.style.display = 'flex';
+    }
+    else if (tipo === 'desbloquear') {
+        titulo.textContent = "Desbloquear";
+        titulo.style.color = "#ffc107";
+        texto.innerHTML = "O acesso será restaurado.";
+        btn.textContent = "Desbloquear";
+        btn.className = "action-btn btn-desbloquear";
+        modalConfirm.style.display = 'flex';
+    }
+    else if (tipo === 'editar-dias') {
+        document.getElementById('input-dias').value = "";
+        document.getElementById('modal-editar-dias').style.display = 'flex';
+    }
+}
+
+async function executarAcaoReal(dados) {
+    const { id, tipo, valor } = dados;
+    let updateData = {};
+
+    if (tipo === 'ativar') {
+        let hoje = new Date();
+        hoje.setDate(hoje.getDate() + 30);
+        updateData = { status_assinatura: 'ativo', data_expiracao_assinatura: hoje.toISOString() };
+    }
+    else if (tipo === 'bloquear') {
+        updateData = { status_assinatura: 'suspenso' };
+    }
+    else if (tipo === 'desbloquear') {
+        const { data: loja } = await _supabase.from('lojas').select('*').eq('id', id).single();
+        let novoStatus = 'ativo';
+        if (!loja.data_expiracao_assinatura && loja.data_fim_teste) novoStatus = 'teste';
+        updateData = { status_assinatura: novoStatus };
+    }
+    else if (tipo === 'editar-dias') {
+        const diasStr = valor.trim();
+        if(!diasStr) return;
+
+        const { data: loja } = await _supabase.from('lojas').select('*').eq('id', id).single();
+        
+        let campoData = loja.status_assinatura === 'teste' ? 'data_fim_teste' : 'data_expiracao_assinatura';
+        if (!loja[campoData]) campoData = 'data_expiracao_assinatura'; 
+
+        let baseData = new Date(loja[campoData] || new Date());
+        
+        if (diasStr.startsWith('+') || diasStr.startsWith('-')) {
+            baseData.setDate(baseData.getDate() + parseInt(diasStr));
+        } else {
+            baseData = new Date(); 
+            baseData.setDate(baseData.getDate() + parseInt(diasStr));
+        }
+
+        updateData = { [campoData]: baseData.toISOString() };
+        if (loja.status_assinatura !== 'suspenso') {
+        }
+    }
+
+    const { error } = await _supabase.from('lojas').update(updateData).eq('id', id);
+
+    if (error) {
+        alert("Erro ao salvar: " + error.message);
+    } else {
+        carregarDados(); 
+    }
+}
+
 window.abrirModalFuncionarios = (lojaId, nomeLoja) => {
     document.getElementById('modal-funcionarios').style.display = 'flex';
+    document.querySelector('.modal-title').textContent = `Equipe: ${nomeLoja}`;
     const listaDiv = document.getElementById('lista-funcionarios');
     listaDiv.innerHTML = '';
 
     const funcionarios = perfisCache.filter(p => p.loja_id == lojaId);
-    const dono = funcionarios.find(p => p.role === 'admin') || funcionarios[0] || {};
-    
-    const tel = dono.telefone || dono.whatsapp || dono.celular || dono.contato || 'Não informado';
-
-    document.querySelector('.modal-title').innerHTML = `
-        ${nomeLoja}<br>
-        <span style="font-size:13px; color:#888; font-weight:normal">📞 Contato: ${tel}</span>
-    `;
 
     if (funcionarios.length === 0) {
-        listaDiv.innerHTML = '<p style="text-align:center; color:#666; padding:20px;">Nenhum usuário vinculado.</p>';
+        listaDiv.innerHTML = '<p style="text-align:center;color:#666">Nenhum funcionário encontrado.</p>';
         return;
     }
 
@@ -161,91 +237,11 @@ window.abrirModalFuncionarios = (lojaId, nomeLoja) => {
         div.className = 'user-item';
         div.innerHTML = `
             <div>
-                <strong>${f.nome_usuario || 'Usuário'}</strong><br>
-                <small style="color:#777">${f.email || f.email_usuario || 'E-mail privado'}</small>
+                <strong style="color:#fff">${f.nome_usuario || 'Sem nome'}</strong><br>
+                <small style="color:#888">${f.email || 'Email oculto'}</small>
             </div>
             <span class="user-role">${f.role || 'Vendedor'}</span>
         `;
         listaDiv.appendChild(div);
     });
 };
-
-function prepararAcao(id, tipo) {
-    acaoPendente = { id, tipo };
-    const modalConfirm = document.getElementById('modal-confirmacao');
-    const titulo = document.getElementById('modal-confirm-titulo');
-    const texto = document.getElementById('modal-confirm-texto');
-    const btn = document.getElementById('btn-confirm-acao');
-
-    if (tipo === 'editar-dias') {
-        document.getElementById('input-dias').value = "";
-        document.getElementById('modal-editar-dias').style.display = 'flex';
-        return;
-    }
-
-    if (tipo === 'ativar') {
-        titulo.textContent = "Renovar Assinatura";
-        titulo.style.color = "#28a745";
-        texto.innerHTML = "Deseja adicionar <strong>30 dias</strong> de acesso para esta loja?";
-        btn.textContent = "Confirmar Renovação";
-        btn.className = "action-btn btn-ativar";
-    } else if (tipo === 'bloquear') {
-        titulo.textContent = "Bloquear Loja";
-        titulo.style.color = "#e06c6e";
-        texto.innerHTML = "O acesso será interrompido imediatamente. Continuar?";
-        btn.textContent = "Bloquear Agora";
-        btn.className = "action-btn btn-bloquear";
-        btn.style.background = "#dc3545";
-    } else if (tipo === 'desbloquear') {
-        titulo.textContent = "Restaurar Acesso";
-        titulo.style.color = "#ffc107";
-        texto.innerHTML = "A loja voltará a ter acesso ao sistema.";
-        btn.textContent = "Desbloquear";
-        btn.className = "action-btn btn-desbloquear";
-    }
-
-    modalConfirm.style.display = 'flex';
-}
-
-async function executarAcaoReal(dados) {
-    const { id, tipo, valor } = dados;
-    let updateData = {};
-
-    try {
-        if (tipo === 'ativar') {
-            const { data: loja } = await _supabase.from('lojas').select('*').eq('id', id).single();
-            let base = new Date();
-            if (loja.data_expiracao_assinatura && new Date(loja.data_expiracao_assinatura) > base) {
-                base = new Date(loja.data_expiracao_assinatura);
-            }
-            base.setDate(base.getDate() + 30);
-            updateData = { status_assinatura: 'ativo', data_expiracao_assinatura: base.toISOString() };
-        }
-        else if (tipo === 'bloquear') {
-            updateData = { status_assinatura: 'suspenso' };
-        }
-        else if (tipo === 'desbloquear') {
-            updateData = { status_assinatura: 'ativo' };
-        }
-        else if (tipo === 'editar-dias') {
-            const diasStr = valor.trim();
-            const { data: loja } = await _supabase.from('lojas').select('*').eq('id', id).single();
-            let dataAlvo = new Date(loja.data_expiracao_assinatura || new Date());
-            
-            if (diasStr.startsWith('+') || diasStr.startsWith('-')) {
-                dataAlvo.setDate(dataAlvo.getDate() + parseInt(diasStr));
-            } else {
-                dataAlvo = new Date();
-                dataAlvo.setDate(dataAlvo.getDate() + parseInt(diasStr));
-            }
-            updateData = { data_expiracao_assinatura: dataAlvo.toISOString(), status_assinatura: 'ativo' };
-        }
-
-        const { error } = await _supabase.from('lojas').update(updateData).eq('id', id);
-        if (error) throw error;
-        
-        carregarDados(); 
-    } catch (err) {
-        alert("Erro na operação: " + err.message);
-    }
-}

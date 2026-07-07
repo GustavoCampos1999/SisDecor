@@ -50,8 +50,9 @@
             background-color: #680d0f;
         }
         #login-logo {
-            max-width: 220px; 
+            max-width: 150px; 
             height: auto;
+            margin-bottom: 15px; 
         }
         #mensagem-erro {
             color: #dc3545;
@@ -135,119 +136,6 @@ message-feedback, .message-error {
     background-color: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
-}
-.bubble-warning {
-    display: none; 
-    background-color: #fff3cd; 
-    color: #856404; 
-    border: 1px solid #ffeeba;
-    padding: 8px 12px;
-    border-radius: 5px;
-    font-size: 13px;
-    margin-top: 5px;
-    position: relative;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-.bubble-warning::before {
-    content: '';
-    position: absolute;
-    top: -12px;
-    left: 20px;
-    border-width: 6px;
-    border-style: solid;
-    border-color: transparent transparent #ffeeba transparent;
-}
-
-.modal-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.6); 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-    backdrop-filter: blur(3px); 
-}
-
-.modal-content {
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    text-align: center;
-    border: 1px solid #ddd;
-}
-
-.modal-content h3 {
-    margin-top: 0;
-    color: #931011; 
-    font-size: 1.4em;
-    margin-bottom: 10px;
-}
-.modal-content p {
-    color: #666;
-    margin-bottom: 20px;
-    line-height: 1.5;
-}
-
-.modal-content input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-    font-size: 16px;
-    background-color: #f9f9f9;
-}
-.modal-content input:focus {
-    border-color: #931011;
-    outline: none;
-    background-color: #fff;
-}
-.modal-actions {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-top: 10px;
-}
-.modal-actions button {
-    flex: 1; 
-    padding: 12px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    transition: background 0.3s;
-}
-.btn-primary-modal {
-    background-color: #b11518;
-    color: white;
-}
-.btn-primary-modal:hover {
-    background-color: #8a0e10;
-}
-.btn-secondary-modal {
-    background-color: #6c757d;
-    color: white;
-}
-.btn-secondary-modal:hover {
-    background-color: #5a6268;
-}
-.btn-cancelar {
-    background-color: #6c757d !important;
-}
-
-button:disabled {
-    background-color: #cccccc !important;
-    color: #666666 !important;
-    cursor: not-allowed !important;
-    transform: none !important;
-    box-shadow: none !important;
-    opacity: 0.8;
 }
 
         @media (max-width: 400px) {

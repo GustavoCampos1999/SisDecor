@@ -3,11 +3,10 @@ import { checkUserSession, setupLogoutButton } from './modules/auth.js';
 import { initUI, showToast, openModal, closeModal } from './modules/ui.js'; 
 import { initCRM, carregarClientes } from './modules/crm.js'; 
 import { initDataManager, renderizarTabelaTecidos, renderizarTabelaConfeccao, renderizarTabelaTrilho, renderizarTabelaFrete, renderizarTabelaInstalacao } from './modules/dataManager.js'; 
-import { initCalculator, showCalculatorView, atualizarListasAmorim, atualizarInterfaceCalculadora } from './modules/calculator.js';
+import { initCalculator, showCalculatorView } from './modules/calculator.js'; 
 import { initTeamManager } from './modules/team.js';
 import { loadPermissions } from './modules/permissions.js';
 import { initRealtime } from './modules/realtime.js';
-
 const BACKEND_API_URL = 'https://painel-de-controle-gcv.onrender.com';
 
 let tecidosDataGlobal = [];
@@ -44,11 +43,7 @@ const calculatorDataRefs = {
      confeccao: {}, 
      trilho: {},    
      frete: {},    
-     instalacao: {},
-     amorim_modelos_cortina: amorimModCortina,
-     amorim_cores_cortina: amorimCorCortina,
-     amorim_modelos_toldo: amorimModToldo,
-     amorim_cores_toldo: amorimCorToldo
+     instalacao: {} 
 };
 
 function showClientListLocal() {
@@ -61,16 +56,6 @@ function showClientListLocal() {
 }
 
 function handleRouting() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const transactionId = urlParams.get('transaction_id');
-
-    if (transactionId) {
-        console.log("Retorno do PagBank detectado. ID:", transactionId);
-        showToast("Pagamento identificado! Estamos processando sua assinatura.", "success");
-        const novaUrl = window.location.origin + window.location.pathname + window.location.hash;
-        window.history.replaceState({}, document.title, novaUrl);
-    }
-
     const hash = window.location.hash;
     if (hash.startsWith('#cliente/')) {
         const clientId = hash.split('/')[1];
@@ -110,6 +95,7 @@ async function buscarDadosBaseDoBackend() {
     const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
     if (sessionError || !session) throw new Error("Sessão não encontrada.");
     
+    // 1. Descobrir o ID da Loja do usuário atual
     const { data: perfil } = await _supabase
         .from('perfis')
         .select('loja_id')
@@ -119,8 +105,9 @@ async function buscarDadosBaseDoBackend() {
     if (!perfil || !perfil.loja_id) throw new Error("Loja não identificada para este usuário.");
     const lojaId = perfil.loja_id;
 
+    // 2. Buscar dados padrão da API (Tecidos, etc)
     const token = session.access_token;
-    const response = await fetch(`${BACKEND_API_URL}/api/dados-base?t=${Date.now()}`, {
+    const response = await fetch(`${BACKEND_API_URL}/api/dados-base`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     
@@ -128,9 +115,10 @@ async function buscarDadosBaseDoBackend() {
     if (response.ok) {
         dadosApi = await response.json();
     } else {
-        console.warn("API de dados-base falhou.");
+        console.warn("API de dados-base falhou, tentando carregar o possível.");
     }
 
+    // 3. Buscar dados AMORIM diretamente do Supabase (Garante que venha atualizado)
     const [resModCortina, resCorCortina, resModToldo, resCorToldo] = await Promise.all([
         _supabase.from('amorim_modelos_cortina').select('*').eq('loja_id', lojaId),
         _supabase.from('amorim_cores_cortina').select('*').eq('loja_id', lojaId),
@@ -138,6 +126,7 @@ async function buscarDadosBaseDoBackend() {
         _supabase.from('amorim_cores_toldo').select('*').eq('loja_id', lojaId)
     ]);
 
+    // Limpeza dos Arrays Globais
     tecidosDataGlobal.length = 0;
     confeccaoDataGlobal.length = 0;
     trilhoDataGlobal.length = 0;
@@ -148,45 +137,46 @@ async function buscarDadosBaseDoBackend() {
     amorimModToldo.length = 0;
     amorimCorToldo.length = 0;
 
+    // Popular Arrays com dados da API
     tecidosDataGlobal.push(...(dadosApi.tecidos || []));
     confeccaoDataGlobal.push(...(dadosApi.confeccao || []));
     trilhoDataGlobal.push(...(dadosApi.trilho || []));
     freteDataGlobal.push(...(dadosApi.frete || []));
     instalacaoDataGlobal.push(...(dadosApi.instalacao || []));
 
+    // Popular Arrays Amorim com dados diretos do Supabase
     if(resModCortina.data) amorimModCortina.push(...resModCortina.data);
     if(resCorCortina.data) amorimCorCortina.push(...resCorCortina.data);
     if(resModToldo.data) amorimModToldo.push(...resModToldo.data);
     if(resCorToldo.data) amorimCorToldo.push(...resCorToldo.data);
 
+    // Configurar Calculadora
     calculatorDataRefs.confeccao = dadosApi.confeccao || []; 
     calculatorDataRefs.trilho = (dadosApi.trilho || []).reduce((acc, item) => { acc[item.opcao] = item.valor; return acc; }, {});
     
-    calculatorDataRefs.amorim_modelos_cortina = amorimModCortina;
-    calculatorDataRefs.amorim_cores_cortina = amorimCorCortina;
-    calculatorDataRefs.amorim_modelos_toldo = amorimModToldo;
-    calculatorDataRefs.amorim_cores_toldo = amorimCorToldo;
     calculatorDataRefs.frete = (dadosApi.frete || []).reduce((acc, item) => {
         const valor = item.valor || 0;
-        const key = (item.opcao && item.opcao.trim() !== '') ? `${item.opcao}` : `R$ ${valor.toFixed(2).replace('.', ',')}`;
+        const valorFormatado = `R$ ${valor.toFixed(2).replace('.', ',')}`;
+        const key = (item.opcao && item.opcao.trim() !== '') ? `${item.opcao}` : valorFormatado;
         acc[key] = valor;
         return acc;
      }, {});
 
     calculatorDataRefs.instalacao = (dadosApi.instalacao || []).reduce((acc, item) => {
         const valor = item.valor || 0;
-        const key = (item.opcao && item.opcao.trim() !== '') ? `${item.opcao}` : `R$ ${valor.toFixed(2).replace('.', ',')}`;
+        const valorFormatado = `R$ ${valor.toFixed(2).replace('.', ',')}`;
+        const key = (item.opcao && item.opcao.trim() !== '') ? `${item.opcao}` : valorFormatado;
         acc[key] = valor;
         return acc;
      }, {});
 
     isDataLoadedFlag.value = true; 
     document.dispatchEvent(new CustomEvent('dadosBaseCarregados')); 
-    console.log("Dados carregados com sucesso.");
+    console.log("Dados carregados com sucesso (Híbrido API + Supabase).");
 
   } catch (error) {
     console.error("Erro ao buscar dados:", error);
-    showToast("Erro ao sincronizar dados.", "error");
+    showToast("Erro ao sincronizar dados. Verifique sua conexão.", "error");
     isDataLoadedFlag.value = false;
   }
 }
@@ -274,10 +264,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         selectParcelamentoGlobal: document.getElementById('select-parcelamento-global'),
         inputValorEntradaGlobal: document.getElementById('input-valor-entrada-global'),
         selectFreteGlobal: document.getElementById('select-frete-global'),
-        inputDescontoGlobal: document.getElementById('input-desconto-global'), 
-        selectTipoDescontoGlobal: document.getElementById('select-tipo-desconto-global'), 
-        textareaAnotacoes: document.getElementById('textarea-anotacoes'), 
-        notesContainer: document.getElementById('calculator-notes-container'), 
         btnVoltarClientes: document.getElementById('btn-voltar-clientes'),
         modalExcluirLinha: document.getElementById('modal-confirm-excluir-linha'),
         btnConfirmarExcluirLinha: document.getElementById('btn-confirmar-excluir-linha'),
@@ -295,6 +281,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         summaryParceladoLabel: document.getElementById('summary-parcelado-label'),
         summaryTotalEntrada: document.getElementById('summary-total-entrada'),
         summaryTotalEntradaValue: document.getElementById('summary-total-entrada-value'),
+        summaryTotalRestante: document.getElementById('summary-total-restante'),
+        summaryRestanteLabel: document.getElementById('summary-restante-label'),
+        summaryTotalRestanteValue: document.getElementById('summary-total-restante-value'),
         modalExcluirAba: document.getElementById('modal-confirm-excluir-aba'),
         btnConfirmarExcluirAba: document.getElementById('btn-confirmar-excluir-aba'),
         btnCancelarExcluirAba: document.getElementById('btn-cancelar-excluir-aba'),
@@ -326,24 +315,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     initTeamManager(elements);
     await checkUserSession();
     await loadPermissions();
-
-    const { data: { session } } = await _supabase.auth.getSession();
-    if (session) {
-        const { data: perfil } = await _supabase
-            .from('perfis')
-            .select('loja_id')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-
-        if (perfil && perfil.loja_id) {
-            setupPagamentoBotoes(perfil.loja_id);
-        }
-    }
-
     initRealtime();
     setupLogoutButton();
     initUI(elements);
-
     if (elements.btnThemeToggle) {
         const body = document.body;
         const applyTheme = (theme) => {
@@ -373,8 +347,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('dadosBaseAlterados', async () => {
         console.log("Evento 'dadosBaseAlterados' recebido, recarregando dados base do backend...");
         await buscarDadosBaseDoBackend(); 
-        atualizarListasAmorim();
-        atualizarInterfaceCalculadora();
         renderizarTabelaTecidos(dataRefs.tecidos);
         renderizarTabelaConfeccao(dataRefs.confeccao);
         renderizarTabelaTrilho(dataRefs.trilho);
@@ -409,7 +381,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 showToast('Item excluído com sucesso.');
                 itemParaExcluirGenericoInfo.elemento?.remove();
-                document.dispatchEvent(new CustomEvent('dadosBaseAlterados'));
+                if (['tecidos', 'confeccao', 'trilho', 'frete', 'instalacao'].includes(tabela)) {
+                    document.dispatchEvent(new CustomEvent('dadosBaseAlterados'));
+                }
             }
             closeModal(elements.modalExcluirGenerico);
             itemParaExcluirGenericoInfo = null;
@@ -421,7 +395,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             itemParaExcluirGenericoInfo = null;
         });
     }
-
     window.prepararExclusaoGenerica = (info) => {
         itemParaExcluirGenericoInfo = info; 
         if (elements.spanItemNomeExcluir) {
@@ -435,15 +408,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('tabelaTrilhoSortRequest', () => { if (triggerTrilhoSort) triggerTrilhoSort(); });
     document.addEventListener('tabelaFreteSortRequest', () => { if (triggerFreteSort) triggerFreteSort(); });
     document.addEventListener('tabelaInstalacaoSortRequest', () => { if (triggerInstalacaoSort) triggerInstalacaoSort(); });
-    document.addEventListener('permissionsUpdated', () => {
-        console.log("Permissões alteradas em tempo real. Redesenhando interfaces...");
-        carregarClientes(); 
-        renderizarTabelaTecidos(dataRefs.tecidos);
-        renderizarTabelaConfeccao(dataRefs.confeccao);
-        renderizarTabelaTrilho(dataRefs.trilho);
-        renderizarTabelaFrete(dataRefs.frete);
-        renderizarTabelaInstalacao(dataRefs.instalacao);
-    });
 
     console.log("Iniciando carregamento de dados (Clientes e Dados Base)...");
     try {
@@ -453,7 +417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ]);
 
         console.log("Carregamento inicial concluído.");
-        atualizarListasAmorim();
+
         renderizarTabelaTecidos(dataRefs.tecidos);
         renderizarTabelaConfeccao(dataRefs.confeccao);
         renderizarTabelaTrilho(dataRefs.trilho);
@@ -563,65 +527,4 @@ function setupTableSorting(tableId, dataArray, renderFunction) {
         }
         sortAndRender();
      }
-}
-
-const stripe = Stripe("pk_test_51T2tSIFLyxQj3iMDv7aYXTWhs6as3wZTgNRyFWfF6w1V9z3xe7EgE4IdnlgsmkJvjBOmcYExFce83nMp3tIFoXcs00kT8cF3rh");
-
-export function setupPagamentoBotoes(lojaId) {
-    const botoes = document.querySelectorAll('.btn-pagseguro'); 
-
-    botoes.forEach(btn => {
-        btn.onclick = async () => {
-            const planoRaw = btn.getAttribute('data-plan'); 
-            const originalText = btn.textContent;
-            
-            try {
-                btn.disabled = true;
-                btn.textContent = 'Carregando...';
-
-                const { data: { session } } = await _supabase.auth.getSession();
-                if (!session) {
-                    alert("Você precisa estar logado para realizar uma assinatura.");
-                    return;
-                }
-
-                const response = await fetch(`${BACKEND_API_URL}/api/pagamentos/checkout`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}` 
-                    },
-                    body: JSON.stringify({ 
-                        plano: planoRaw, 
-                        loja_id: lojaId,
-                        email_cliente: session.user.email 
-                    })
-                });
-
-                const responseData = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(responseData.erro || 'Erro ao iniciar checkout.');
-                }
-
-                const checkoutContainer = document.getElementById('checkout-container');
-                if (checkoutContainer) {
-                    checkoutContainer.style.display = 'block';
-                    
-                    const checkout = await stripe.initEmbeddedCheckout({
-                        clientSecret: responseData.clientSecret,
-                    });
-
-                    checkout.mount('#checkout');
-                }
-
-            } catch (error) {
-                console.error("Erro no processo de pagamento:", error);
-                alert(`Erro: ${error.message}`);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = originalText;
-            }
-        };
-    });
 }

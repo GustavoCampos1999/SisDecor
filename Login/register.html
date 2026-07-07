@@ -4,49 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registre-se - Painel Admin</title>
-    <link rel="stylesheet" href="login.css">
-    <link rel="icon" type="image/png" href="../images/favicon.ico">
-</head>
+    <link rel="stylesheet" href="login.css"> </head> <link rel="icon" type="image/png" href="../images/favicon.ico">
 <body>
     <div class="login-container">
-        <img src="../images/MainLogo.png" alt="Logo" id="login-logo">
+        <img src="../images/logo.png" alt="Logo" id="login-logo">
         
         <h2 style="font-size: 1.2em; margin-bottom: 15px;">Criar Acesso</h2>
         <form id="form-register">
-            <div style="margin-bottom: 5px;">
+            <div style="margin-bottom: 20px;">
                 <label for="cnpj">CNPJ</label>
                 <input type="text" id="cnpj" required placeholder="Digite para buscar a empresa...">
                 
-                <div style="margin-top: 2px; line-height: 1.2; min-height: 15px; margin-bottom: 0;">
-                    <span id="cnpj-msg-info" style="display: block; color: #007bff; font-size: 13px; font-weight: 500;"></span>
-                    <span id="cnpj-msg-erro" style="display: block; color: #dc3545; font-size: 13px; font-weight: 500;"></span>
+                <div style="margin-top: 5px; line-height: 1.2;">
+                    <span id="mensagem-info" style="display: block; color: #007bff; font-size: 13px; font-weight: 500;"></span>
+                    <span id="mensagem-erro" style="display: block; color: #dc3545; font-size: 13px; font-weight: 500;"></span>
                 </div>
             </div>
+
             <div>
                 <label for="nome_empresa">Nome da Empresa</label>
                 <input type="text" id="nome_empresa" required readonly style="background-color: #e9ecef; cursor: not-allowed; color: #555; font-weight: bold;">
             </div>
-            
-            <div style="margin-bottom: 15px;">
+
+             <div>
                 <label for="telefone">Telefone</label>
-                <input type="tel" id="telefone" required maxlength="15" placeholder="(99) 99999-9999">
-                <div id="telefone-bubble" class="bubble-warning">⚠ Insira um telefone válido com DDD.</div>
+                <input type="tel" id="telefone" required>
             </div>
-            
             <div>
                 <label for="nome_usuario">Nome de Usuário</label>
                 <input type="text" id="nome_usuario" required>
             </div>
-            
-            <div style="margin-bottom: 15px;">
-                <label for="email">E-mail (Login)</label>
+            <div>
+                <label for="email">Email (Será seu login)</label>
                 <input type="email" id="email" required>
-                <div id="email-bubble" class="bubble-warning">⚠ Insira um e-mail válido.</div>
-                <small style="display: block; color: #666; font-size: 11px; margin-bottom: 6px; font-weight: normal;">
-                    Será necessário verificar o e-mail.
-                </small>
             </div>
-
             <div>
                 <label for="senha">Senha</label>
                 <input type="password" id="senha" placeholder="Mínimo 6 caracteres" required>
@@ -56,13 +47,7 @@
                 <input type="password" id="confirmar_senha" placeholder="Repita a senha" required>
             </div>
 
-            <button type="submit" id="btn-register">Criar Conta e Iniciar Teste de 30 Dias</button>
-
-            <div style="margin-top: 15px; line-height: 1.2;">
-                <span id="submit-msg-info" style="display: block; color: #007bff; font-size: 14px; font-weight: bold; margin-bottom: 5px;"></span>
-                <span id="submit-msg-erro" style="display: block; color: #dc3545; font-size: 14px; font-weight: 500;"></span>
-            </div>
-
+            <button type="submit" id="btn-register">Criar Conta e Iniciar Teste de 7 Dias</button>
         </form>
         <div style="text-align: center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
             <a href="login.html" style="text-decoration: none; color: #555;">Já tem uma conta? Faça Login</a>

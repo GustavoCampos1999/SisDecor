@@ -1,7 +1,6 @@
 import { _supabase } from '../supabaseClient.js';
 import { showToast, openModal, closeModal } from './ui.js'; 
 import { can } from './permissions.js';
-export let markupPadraoGlobal = 100;
 
 let elements = {};
 let dataArrays = {}; 
@@ -80,8 +79,6 @@ function initDataManager(domElements, dataRefs) {
     setupCRUD('trilho');
     setupCRUD('frete');
     setupCRUD('instalacao');
-    setupToggleButtons('form-add-confeccao', 'add-confeccao-opcao-hidden');
-    setupToggleButtons('form-edit-confeccao', 'edit-confeccao-opcao-hidden');
 
     setupAmorim(
         'amorim_modelos_cortina', 
@@ -145,43 +142,8 @@ function initDataManager(domElements, dataRefs) {
     setupInputFormatting('edit-frete-valor', 'currency');
     setupInputFormatting('add-instalacao-valor', 'currency');
     setupInputFormatting('edit-instalacao-valor', 'currency');
-    const inputMarkupPadrao = document.getElementById('input-markup-padrao');
-    const btnSalvarMarkupPadrao = document.getElementById('btn-salvar-markup-padrao');
-
-    if (inputMarkupPadrao && btnSalvarMarkupPadrao) {
-        getMyLojaId().then(async (lojaId) => {
-            if (!lojaId) return;
-            const { data } = await _supabase.from('configuracoes').select('markup_padrao').eq('loja_id', lojaId).maybeSingle();
-            if (data && data.markup_padrao) {
-                markupPadraoGlobal = data.markup_padrao;
-                inputMarkupPadrao.value = data.markup_padrao;
-            }
-        });
-
-        btnSalvarMarkupPadrao.addEventListener('click', async () => {
-            const lojaId = await getMyLojaId();
-            if (!lojaId) return;
-            
-            const novoValor = parseFloat(inputMarkupPadrao.value) || 100;
-            btnSalvarMarkupPadrao.textContent = "Salvando...";
-            btnSalvarMarkupPadrao.disabled = true;
-
-            const { error } = await _supabase.from('configuracoes').upsert(
-                { loja_id: lojaId, markup_padrao: novoValor }, 
-                { onConflict: 'loja_id' }
-            );
-
-            btnSalvarMarkupPadrao.textContent = "Salvar Padrão";
-            btnSalvarMarkupPadrao.disabled = false;
-
-            if (!error) {
-                markupPadraoGlobal = novoValor;
-                showToast("Markup padrão atualizado!");
-            } else {
-                showToast("Erro ao salvar markup padrão.", "error");
-            }
-        });
-    }
+    setupInputFormatting('add-confeccao-limite', 'measure'); 
+    setupInputFormatting('edit-confeccao-limite', 'measure');
 }
 
 function getRenderFunction(tabela) { 
@@ -217,26 +179,18 @@ function renderizarTabelaAmorimGen(dados, bodyId) {
     const lista = dados || [];
     
     if (lista.length === 0) { 
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Nenhum item encontrado.</td></tr>'; 
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Nenhum item encontrado.</td></tr>'; 
         return; 
     }
     
-    lista.sort((a,b) => {
-        if (a.favorito === b.favorito) return a.opcao.localeCompare(b.opcao);
-        return a.favorito ? -1 : 1;
-    });
+    lista.sort((a,b) => a.opcao.localeCompare(b.opcao));
 
     lista.forEach(d => {
         const row = tbody.insertRow();
         row.dataset.id = d.id;
         row.dataset.opcao = d.opcao; 
-        row.dataset.favorito = d.favorito || false; 
-        
-        const favoritoClass = d.favorito ? 'favorito' : ''; 
-        const favoritoIcon = d.favorito ? '★' : '☆';
         
         row.innerHTML = `
-            <td class="col-favorito-acao"><span class="btn-favorito ${favoritoClass}" title="Favoritar">${favoritoIcon}</span></td>
             <td>${d.opcao}</td>
             <td style="text-align: center;">
                 <button class="btn-editar">Editar</button> 
@@ -336,7 +290,7 @@ function renderizarTabelaConfeccao(opcoes) {
     if (!tbody) return;
     tbody.innerHTML = '';
     const filtradas = (opcoes || []).filter(item => item.opcao !== '-');
-    if (filtradas.length === 0) { tbody.innerHTML = '<tr><td colspan="3">Nenhuma opção encontrada.</td></tr>'; return; } 
+    if (filtradas.length === 0) { tbody.innerHTML = '<tr><td colspan="4">Nenhuma opção encontrada.</td></tr>'; return; }
 
     const botoes = gerarBotoesAcao();
 
@@ -345,13 +299,19 @@ function renderizarTabelaConfeccao(opcoes) {
         row.dataset.id = d.id; 
         row.dataset.opcao = d.opcao; 
         row.dataset.valor = d.valor || 0; 
+        row.dataset.favorito = d.favorito || false;
         row.dataset.altura_especial = d.altura_especial; 
+
+        const favoritoClass = d.favorito ? 'favorito' : ''; 
+        const favoritoIcon = d.favorito ? '★' : '☆';
         
         let regraTexto = '';
         if (d.altura_especial === true) {
             regraTexto = `<span style="font-size:11px; color:#fff; background:#e06c6e; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">Altura ≥ 3,50m</span>`;
         }
+
         row.innerHTML = `
+            <td class="col-favorito-acao"><span class="btn-favorito ${favoritoClass}" title="Favoritar">${favoritoIcon}</span></td>
             <td>${d.opcao} ${regraTexto}</td>
             <td>R$ ${formatDecimal(d.valor, 2)}</td>
             <td>${botoes}</td>`;
@@ -417,10 +377,6 @@ function setupCRUD(tabela) {
                 if (tabela === 'confeccao') {
                     const chk = document.getElementById('add-confeccao-altura-especial');
                     if (chk) chk.checked = false;
-                    
-                    formAdd.querySelectorAll('.btn-toggle-type').forEach(b => b.classList.remove('active'));
-                    const hiddenInput = document.getElementById('add-confeccao-opcao-hidden');
-                    if(hiddenInput) hiddenInput.value = "";
                 }
             }
             openModal(modalAdd);
@@ -430,119 +386,43 @@ function setupCRUD(tabela) {
     if (formAdd) {
         formAdd.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const btnSubmit = formAdd.querySelector('button[type="submit"]');
-            const textoOriginal = btnSubmit ? btnSubmit.textContent : "Salvar";
-            
-            if(btnSubmit) {
-                btnSubmit.disabled = true;
-                btnSubmit.textContent = "Salvando...";
+            if (!can('perm_data_add')) {
+                showToast("Sem permissão para adicionar.", "error");
+                return;
             }
+            const dadosFormulario = getFormData(formAdd, tabela);
+            const lojaId = await getMyLojaId(); 
+            if (!lojaId) return;
 
-            try {
-                if (!can('perm_data_add')) {
-                    showToast("Sem permissão para adicionar.", "error");
-                    return;
-                }
-                
-                const dadosFormulario = getFormData(formAdd, tabela);
-                
-                if (tabela === 'confeccao') {
-                    if (!dadosFormulario.opcao) {
-                        showToast("Selecione pelo menos uma opção (Cortina, Forro ou Blackout).", "error");
-                        return;
-                    }
-                    const duplicado = (dataArrays.confeccao || []).find(item => 
-                        item.opcao === dadosFormulario.opcao && 
-                        Boolean(item.altura_especial) === Boolean(dadosFormulario.altura_especial)
-                    );
-                    if (duplicado) {
-                        const tipoAltura = dadosFormulario.altura_especial ? "Altura ≥ 3,50m" : "Altura Padrão";
-                        showToast(`Já existe: "${dadosFormulario.opcao}" para ${tipoAltura}.`, "error");
-                        return;
-                    }
-                }
+            const dadosParaInserir = { ...dadosFormulario, loja_id: lojaId };
+            const { error } = await _supabase.from(tabela).insert(dadosParaInserir);
 
-                const lojaId = await getMyLojaId(); 
-                if (!lojaId) return;
-
-                const dadosParaInserir = { ...dadosFormulario, loja_id: lojaId };
-                const { error } = await _supabase.from(tabela).insert(dadosParaInserir);
-
-                handleSaveResponse(error, modalAdd, tabela, `✅ ${nomeSingular} adicionado(a)!`);
-            
-            } catch (erro) {
-                console.error(erro);
-                showToast("Erro inesperado ao salvar.", "error");
-            } finally {
-                if(btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.textContent = textoOriginal;
-                }
-            }
+            handleSaveResponse(error, modalAdd, tabela, `✅ ${nomeSingular} adicionado(a)!`);
         });
     }
-    
     if (btnCancelAdd) btnCancelAdd.addEventListener('click', () => closeModal(modalAdd));
 
     if (formEdit) {
         formEdit.addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            const btnSubmit = formEdit.querySelector('button[type="submit"]');
-            const textoOriginal = btnSubmit ? btnSubmit.textContent : "Salvar";
-
-            if(btnSubmit) {
-                btnSubmit.disabled = true;
-                btnSubmit.textContent = "Salvando...";
+            if (!can('perm_data_edit')) {
+                showToast("Sem permissão para editar.", "error");
+                return;
             }
+            const dadosFormulario = getFormData(formEdit, tabela);
+            const id = formEdit.querySelector(`input[name="id"]`)?.value; 
+            if (!id) return;
 
-            try {
-                if (!can('perm_data_edit')) {
-                    showToast("Sem permissão para editar.", "error");
-                    return;
-                }
-                const dadosFormulario = getFormData(formEdit, tabela);
-                const id = formEdit.querySelector(`input[name="id"]`)?.value; 
-                if (!id) return;
+            const lojaId = await getMyLojaId(); 
+            if (!lojaId) return;
 
-                if (tabela === 'confeccao') {
-                    if (!dadosFormulario.opcao) {
-                        showToast("Selecione pelo menos uma opção.", "error");
-                        return;
-                    }
-                    const duplicado = (dataArrays.confeccao || []).find(item => 
-                        item.id != id && 
-                        item.opcao === dadosFormulario.opcao && 
-                        Boolean(item.altura_especial) === Boolean(dadosFormulario.altura_especial)
-                    );
-                    if (duplicado) {
-                        showToast(`Conflito: Essa combinação já existe em outro cadastro.`, "error");
-                        return;
-                    }
-                }
+            const updateData = {...dadosFormulario};
+            delete updateData.id;
 
-                const lojaId = await getMyLojaId(); 
-                if (!lojaId) return;
-
-                const updateData = {...dadosFormulario};
-                delete updateData.id;
-
-                const { error } = await _supabase.from(tabela).update(updateData).match({ id: id, loja_id: lojaId }); 
-                handleSaveResponse(error, modalEdit, tabela, `✅ ${nomeSingular} atualizado(a)!`);
-            
-            } catch(erro) {
-                console.error(erro);
-                showToast("Erro inesperado ao editar.", "error");
-            } finally {
-                if(btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.textContent = textoOriginal;
-                }
-            }
+            const { error } = await _supabase.from(tabela).update(updateData).match({ id: id, loja_id: lojaId }); 
+            handleSaveResponse(error, modalEdit, tabela, `✅ ${nomeSingular} atualizado(a)!`);
         });
     }
-    
     if (btnCancelEdit) btnCancelEdit.addEventListener('click', () => closeModal(modalEdit));
 
     if (tbody) {
@@ -560,23 +440,19 @@ function setupCRUD(tabela) {
                  const starElement = target;
                  const isFavorito = row.dataset.favorito === 'true';
                  const newStatus = !isFavorito;
-                 
                  starElement.textContent = newStatus ? '★' : '☆';
                  starElement.classList.toggle('favorito', newStatus);
                  row.dataset.favorito = newStatus;
-                 
                  const { error } = await _supabase.from(tabela).update({ favorito: newStatus }).match({ id: id, loja_id: lojaId }); 
-                 if (error) { 
-                     showToast('Erro ao atualizar favorito.', true); 
-                     starElement.textContent = isFavorito ? '★' : '☆';
-                     starElement.classList.toggle('favorito', isFavorito);
-                 } else { 
+                 if (error) { showToast('Erro ao atualizar favorito.', true); } 
+                 else { 
                     const itemInData = dataArrays[tabela].find(item => item.id == id);
                     if (itemInData) itemInData.favorito = newStatus;
                     document.dispatchEvent(new CustomEvent(`tabela${nomeCapitalizado}SortRequest`));
                  }
                  return;
             }
+            
             if (target.classList.contains('btn-excluir')) {
                 if (!can('perm_data_delete')) {
                     showToast("Sem permissão para excluir.", "error");
@@ -586,11 +462,13 @@ function setupCRUD(tabela) {
                 if (window.prepararExclusaoGenerica) window.prepararExclusaoGenerica({ id, nome, tabela, loja_id: lojaId, elemento: row });
                 return; 
             }
+
             if (target.classList.contains('btn-editar')) {
                 if (!can('perm_data_edit')) { showToast("Sem permissão.", "error"); return; }
                 if(formEdit){
                     formEdit.querySelector(`input[name="id"]`).value = id;
                     
+                    // Loop padrão para preencher inputs de texto e numero
                     for (const key in row.dataset) {
                        const input = formEdit.querySelector(`[name="${key}"]`);
                        if(input && key !== 'id') {
@@ -614,19 +492,17 @@ function setupCRUD(tabela) {
                         if(chkForro) chkForro.checked = false;
                         if(chkBlackout) chkBlackout.checked = false;
                         const itemOriginal = dataArrays['tecidos'].find(i => i.id == id);
+                        
                         if (itemOriginal && itemOriginal.categorias) {
                             if (itemOriginal.categorias.includes('cortina') && chkCortina) chkCortina.checked = true;
                             if (itemOriginal.categorias.includes('forro') && chkForro) chkForro.checked = true;
                             if (itemOriginal.categorias.includes('blackout') && chkBlackout) chkBlackout.checked = true;
                         }
                     }
-                    
                     if (tabela === 'confeccao') {
                         const isEspecial = row.dataset.altura_especial === 'true';
                         const chk = document.getElementById('edit-confeccao-altura-especial');
                         if (chk) chk.checked = isEspecial;
-                        
-                        carregarBotoesConfeccao('form-edit-confeccao', row.dataset.opcao);
                     }
                 }
                 openModal(modalEdit);
@@ -634,46 +510,6 @@ function setupCRUD(tabela) {
             }
         });
     }
-}
-function setupToggleButtons(formId, hiddenInputId) {
-    const form = document.getElementById(formId);
-    if (!form) return;
-    const hiddenInput = document.getElementById(hiddenInputId);
-    const buttons = form.querySelectorAll('.btn-toggle-type');
-
-    buttons.forEach(btn => {
-        const novoBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(novoBtn, btn);
-        
-        novoBtn.addEventListener('click', () => {
-            novoBtn.classList.toggle('active');
-            atualizarInputOpcaoConfeccao(form, hiddenInput);
-        });
-    });
-}
-
-function atualizarInputOpcaoConfeccao(form, hiddenInput) {
-    const actives = [];
-    if (form.querySelector('.btn-toggle-type[data-value="Cortina"]').classList.contains('active')) actives.push("Cortina");
-    if (form.querySelector('.btn-toggle-type[data-value="Forro"]').classList.contains('active')) actives.push("Forro");
-    if (form.querySelector('.btn-toggle-type[data-value="Blackout"]').classList.contains('active')) actives.push("Blackout");
-    
-    hiddenInput.value = actives.join(" + ");
-}
-
-function carregarBotoesConfeccao(formId, opcaoString) {
-    const form = document.getElementById(formId);
-    if(!form) return;
-    form.querySelectorAll('.btn-toggle-type').forEach(b => b.classList.remove('active'));
-    
-    if(!opcaoString) return;
-    
-    if(opcaoString.includes("Cortina")) form.querySelector('.btn-toggle-type[data-value="Cortina"]').classList.add('active');
-    if(opcaoString.includes("Forro")) form.querySelector('.btn-toggle-type[data-value="Forro"]').classList.add('active');
-    if(opcaoString.includes("Blackout")) form.querySelector('.btn-toggle-type[data-value="Blackout"]').classList.add('active');
-    
-    const hiddenInput = form.querySelector('input[name="opcao"]');
-    if(hiddenInput) hiddenInput.value = opcaoString;
 }
 
 function getFormData(form, tabela) {
@@ -759,9 +595,8 @@ function setupAmorim(tabelaBanco, idBtnAdd, idModalAdd, idFormAdd, idModalEdit, 
     };
 
     render(); 
-    document.addEventListener('dadosBaseAlterados', () => setTimeout(render, 100));
-    document.addEventListener('dadosBaseCarregados', render);
-    document.addEventListener('permissionsUpdated', render);
+    document.addEventListener('dadosBaseAlterados', render);
+    document.addEventListener('dadosBaseCarregados', render); 
 
     if (btnAdd) {
         btnAdd.addEventListener('click', () => { 
@@ -799,6 +634,7 @@ function setupAmorim(tabelaBanco, idBtnAdd, idModalAdd, idFormAdd, idModalEdit, 
             b.addEventListener('click', () => closeModal(modalEdit))
         );
     }
+
     if (formEdit) {
         formEdit.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -825,27 +661,6 @@ function setupAmorim(tabelaBanco, idBtnAdd, idModalAdd, idFormAdd, idModalEdit, 
             if(!row) return;
             const id = row.dataset.id;
             const nome = row.dataset.opcao;
-            if (target.classList.contains('btn-favorito')) {
-                 const lojaId = await getMyLojaId();
-                 if (!lojaId) return;
-                 const isFavorito = row.dataset.favorito === 'true';
-                 const newStatus = !isFavorito;
-                 target.textContent = newStatus ? '★' : '☆';
-                 target.classList.toggle('favorito', newStatus);
-                 row.dataset.favorito = newStatus;
-                 const { error } = await _supabase.from(tabelaBanco).update({ favorito: newStatus }).match({ id: id, loja_id: lojaId });
-                 
-                 if (error) { 
-                     showToast('Erro ao atualizar favorito.', true); 
-                     target.textContent = isFavorito ? '★' : '☆';
-                     target.classList.toggle('favorito', isFavorito);
-                 } else {
-                     const item = dataArrays[tabelaBanco].find(i => i.id == id);
-                     if(item) item.favorito = newStatus;
-                     renderizarTabelaAmorimGen(dataArrays[tabelaBanco], idTbody);
-                 }
-                 return;
-            }
 
             if (target.classList.contains('btn-editar')) {
                 if(formEdit) {

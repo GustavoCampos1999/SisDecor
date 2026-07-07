@@ -23,7 +23,6 @@ export async function loadPermissions() {
                 currentPermissions = data;
             }
             applyPermissionsUI(); 
-            document.dispatchEvent(new CustomEvent('permissionsUpdated'));
         }
     } catch (e) {
         console.error("Erro loading permissions:", e);
