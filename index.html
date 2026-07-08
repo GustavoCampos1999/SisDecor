@@ -92,7 +92,7 @@
                         <div class="input-wrapper-relative">
     <div class="label-with-icon">
         <label for="select-parcelamento-global">PARCELAMENTO</label>
-        <button id="btn-config-taxas" title="Editar Taxas" type="button">⚙️</button>
+        <button id="btn-config-taxas" title="Editar Taxas" type="button" class="hide-on-print">⚙️</button>
     </div>
     <select id="select-parcelamento-global" class="global-calc-trigger"></select>
 </div>
@@ -459,7 +459,8 @@
 
         <th colspan="2" class="sessao-blackout">BLACKOUT</th> 
 
-        <th colspan="4" class="sessao-valores">VALORES</th> 
+        <th colspan="4" class="sessao-valores hide-on-print">VALORES</th> 
+        <th colspan="1" class="sessao-valores show-on-print" style="display:none;">VALORES</th> 
         <th colspan="3" class="sessao-orcamento">ORÇAMENTO</th>
     </tr>
     <tr>
@@ -473,10 +474,10 @@
         <th class="sessao-blackout">FRANZIDO</th>
         <th class="sessao-blackout">CÓDIGO TECIDO</th>
         <th class="sessao-blackout">QTD.</th>
-        <th class="sessao-valores">CONFECÇÃO</th>
+        <th class="sessao-valores hide-on-print">CONFECÇÃO</th>
         <th class="sessao-valores">TRILHO</th>
-        <th class="sessao-valores">INSTALAÇÃO</th>
-        <th class="sessao-valores">OUTROS</th>
+        <th class="sessao-valores hide-on-print">INSTALAÇÃO</th>
+        <th class="sessao-valores hide-on-print">OUTROS</th>
         <th class="sessao-orcamento">TOTAL</th>
         <th id="th-parcelado-header" class="th-parcelado-header sessao-orcamento">DÉBITO</th>
         <th class="sessao-orcamento">OBSERVAÇÃO</th>
@@ -604,10 +605,10 @@
     <td><input type="text" class="resultado" readonly></td> <td><select class="select-codTecidoForro"></select></td>
     <td><input type="text" class="resultado" readonly></td> <td><select class="select-franzBlackout"></select></td>
     <td><select class="select-codTecidoBlackout"></select></td>
-    <td><input type="text" class="resultado" readonly></td> <td><select class="select-confecao"></select></td>
+    <td><input type="text" class="resultado" readonly></td> <td class="hide-on-print"><select class="select-confecao"></select></td>
     <td><select class="select-trilho"></select></td>
-    <td><select class="select-instalacao"></select></td>
-    <td><input type="text" class="input-outros format-money"></td>
+    <td class="hide-on-print"><select class="select-instalacao"></select></td>
+    <td class="hide-on-print"><input type="text" class="input-outros format-money"></td>
     <td><input type="text" class="resultado-preco-total" readonly></td>
     <td><input type="text" class="resultado-preco-parcelado" readonly></td>
     <td><input type="text" class="input-observacao" placeholder="Obs..."></td>

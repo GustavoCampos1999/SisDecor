@@ -8,6 +8,7 @@ const DADOS_FRANZ_CORTINA = ["3.0", "2.8", "2.5", "2.0", "1.5", "1.2", "1.0"];
 const DADOS_FRANZ_BLACKOUT = ["2.5", "2.0", "1.5", "1.2", "1.0"];
 
 const TAXAS_PADRAO = {
+    'PIX': 0.0000, 'NA ENTREGA': 0.0000, '30 DIAS': 0.0000,
     'DÉBITO': 0.0099, '1x': 0.0299, '2x': 0.0409, '3x': 0.0478, '4x': 0.0547, '5x': 0.0614, 
     '6x': 0.0681, '7x': 0.0767, '8x': 0.0833, '9x': 0.0898, '10x': 0.0963, '11x': 0.1026,
     '12x': 0.1090, '13x': 0.1152, '14x': 0.1214, '15x': 0.1276, '16x': 0.1337, '17x': 0.1397,
@@ -260,8 +261,13 @@ export function initCalculator(domElements, dataArrays, clientIdRef, isDataLoade
     }
     if (elements.chkSummaryVendaRealizada) {
         elements.chkSummaryVendaRealizada.addEventListener('change', () => {
-            if (abaAtivaIndex < 0 || abaAtivaIndex >= estadoAbas.length) return;
-            estadoAbas[abaAtivaIndex].venda_realizada = elements.chkSummaryVendaRealizada.checked;
+            const isFechada = elements.chkSummaryVendaRealizada.checked;
+            estadoAbas[abaAtivaIndex].venda_realizada = isFechada;
+            
+            const calcContainer = document.getElementById('calculator-view');
+            if (isFechada) calcContainer?.classList.add('venda-fechada-lock');
+            else calcContainer?.classList.remove('venda-fechada-lock');
+            
             renderizarTabs();
             atualizarStatusVendaCliente(true, currentClientIdRef.value); 
             setDirty();
@@ -740,12 +746,16 @@ function recalcularTotaisSelecionados() {
         
         totalGeral += valorLinha;
 
-        if (linha.querySelector('.select-linha-checkbox')?.checked) {
+        const isChecked = linha.querySelector('.select-linha-checkbox')?.checked;
+        if (isChecked) {
+            linha.classList.remove('no-print');
             algumSelect = true;
             totalSelecionado += valorLinha;
             if(linha.dataset.linhaType === 'tecido') {
                 totalInstalacao += parseFloat(linha.querySelector('.select-instalacao')?.value) || 0;
             }
+        } else {
+            linha.classList.add('no-print');
         }
     });
 
@@ -996,7 +1006,15 @@ function ativarAba(index, isInitialLoad) {
         }
     });
     
-    if(elements.chkSummaryVendaRealizada) elements.chkSummaryVendaRealizada.checked = aba.venda_realizada;
+    if(elements.chkSummaryVendaRealizada) {
+        elements.chkSummaryVendaRealizada.checked = aba.venda_realizada;
+        const calcContainer = document.getElementById('calculator-view');
+        if (aba.venda_realizada) {
+            calcContainer?.classList.add('venda-fechada-lock');
+        } else {
+            calcContainer?.classList.remove('venda-fechada-lock');
+        }
+    }
     checkSectionControls();
     recalcularTotaisSelecionados();
 }

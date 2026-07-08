@@ -22,7 +22,8 @@ function calcularOrcamento(dados) {
   const valorFrete = parseFloat(dados.valorFrete) || 0;
   const valorOutros = parseFloat(dados.valorOutros) || 0;
 
-  const markup_Base = parseFloat(dados.markupBase) || 1.0; 
+  const mb = parseFloat(dados.markupBase);
+  const markup_Base = isNaN(mb) ? 1.0 : mb;
   const fatorMarkupTotal = 1 + markup_Base;
   
   let R = 0; 

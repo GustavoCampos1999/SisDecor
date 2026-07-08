@@ -707,9 +707,13 @@ body.dark-mode #container-inputs-taxas input:focus {
     .linha-calculo-cliente .select-linha-checkbox:not(:checked) {
         display: none !important;
     }
-    .quote-section:not(:has(.select-linha-checkbox:checked)),
-    .linha-calculo-cliente:has(.select-linha-checkbox:not(:checked)) {
+    .quote-section.no-print,
+    .linha-calculo-cliente.no-print,
+    .hide-on-print {
         display: none !important; 
+    }
+    .show-on-print {
+        display: table-cell !important;
     }
     .calculator-header {
         padding: 0 !important;
@@ -847,9 +851,12 @@ body.dark-mode #container-inputs-taxas input:focus {
     .tabela-calculo td.col-selecionar-calc {
         display: none !important;
     }
-.tabela-calculo col.print-col-qtd-cortina,
+    .tabela-calculo col.print-col-qtd-cortina,
     .tabela-calculo col.print-col-qtd-forro,
-    .tabela-calculo col.print-col-qtd-blackout {
+    .tabela-calculo col.print-col-qtd-blackout,
+    .tabela-calculo col.print-col-confeccao,
+    .tabela-calculo col.print-col-instalacao,
+    .tabela-calculo col.print-col-outros {
         display: none !important;
     }
     .quote-section[data-section-type="tecido"] .print-col-ambiente { width: 8%; }
@@ -929,5 +936,16 @@ body.dark-mode #container-inputs-taxas input:focus {
 .tabela-calculo input:-moz-placeholder { 
     color: transparent !important;
     opacity: 0 !important;
+}
+
+/* Trava da Venda Realizada */
+#calculator-view.venda-fechada-lock {
+    pointer-events: none;
+    opacity: 0.85;
+}
+#calculator-view.venda-fechada-lock .summary-venda-container,
+#calculator-view.venda-fechada-lock .calculator-header {
+    pointer-events: auto;
+    opacity: 1;
 }
 }

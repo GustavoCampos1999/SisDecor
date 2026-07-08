@@ -90,17 +90,18 @@ app.post('/register', async (req, res) => {
                 owner_user_id: userData.user.id,
                 cnpj: cnpjLimpo,
                 telefone: telefone,
-                subscription_status: 'trialing',
-                trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                status_assinatura: 'trialing',
+                data_fim_teste: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
             }).select('id').single();
         if (lojaError) throw lojaError;
 
-        await supabaseService.from('perfis').insert({
+        const { error: perfilError } = await supabaseService.from('perfis').insert({
             user_id: userData.user.id,
             loja_id: lojaData.id,
             role: 'admin',
             nome_usuario
         });
+        if (perfilError) throw perfilError;
 
         res.status(201).json({ mensagem: "Conta criada!" });
     } catch (error) {
@@ -172,7 +173,8 @@ app.put('/api/orcamentos/:clientId', async (req, res) => {
 
 app.get('/api/roles', async (req, res) => {
     try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
+        const { data: { user }, error: authError } = await supabaseService.auth.getUser(req.authToken);
+        if (authError || !user) return res.status(401).json({ erro: "Token inválido." });
         const { data: perfil } = await supabaseService.from('perfis').select('loja_id').eq('user_id', user.id).single();
         if (!perfil) return res.status(403).json({ erro: "Perfil não encontrado" });
 
@@ -186,7 +188,8 @@ app.get('/api/roles', async (req, res) => {
 app.post('/api/roles', async (req, res) => {
     const { id, nome, permissions } = req.body;
     try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
+        const { data: { user }, error: authError } = await supabaseService.auth.getUser(req.authToken);
+        if (authError || !user) return res.status(401).json({ erro: "Token inválido." });
         const { data: perfil } = await supabaseService.from('perfis').select('loja_id, role').eq('user_id', user.id).single();
 
         if (perfil.role !== 'admin') return res.status(403).json({ erro: "Sem permissão." });
@@ -204,11 +207,13 @@ app.post('/api/roles', async (req, res) => {
 
 app.delete('/api/roles/:id', async (req, res) => {
     try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
+        const { data: { user }, error: authError } = await supabaseService.auth.getUser(req.authToken);
+        if (authError || !user) return res.status(401).json({ erro: "Token inválido." });
         const { data: perfil } = await supabaseService.from('perfis').select('loja_id, role').eq('user_id', user.id).single();
         if (perfil.role !== 'admin') return res.status(403).json({ erro: "Sem permissão." });
 
-        await supabaseService.from('loja_roles').delete().match({ id: req.params.id, loja_id: perfil.loja_id });
+        const { error: delError } = await supabaseService.from('loja_roles').delete().match({ id: req.params.id, loja_id: perfil.loja_id });
+        if (delError) throw delError;
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ erro: error.message });
@@ -217,7 +222,8 @@ app.delete('/api/roles/:id', async (req, res) => {
 
 app.get('/api/team', async (req, res) => {
     try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
+        const { data: { user }, error: authError } = await supabaseService.auth.getUser(req.authToken);
+        if (authError || !user) return res.status(401).json({ erro: "Token inválido." });
         const { data: perfil } = await supabaseService.from('perfis').select('loja_id').eq('user_id', user.id).single();
         
         if (!perfil) return res.status(403).json({ erro: "Perfil não encontrado" });
@@ -254,12 +260,13 @@ app.post('/api/team/add', async (req, res) => {
     if (!nome || !email || !senha) return res.status(400).json({ erro: "Dados incompletos." });
 
     try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
+        const { data: { user }, error: authError } = await supabaseService.auth.getUser(req.authToken);
+        if (authError || !user) return res.status(401).json({ erro: "Token inválido." });
         const { data: perfil } = await supabaseService.from('perfis').select('loja_id, role').eq('user_id', user.id).single();
         if (perfil.role !== 'admin') return res.status(403).json({ erro: "Apenas admin." });
 
-        const { data: authUser, error: authError } = await supabaseService.auth.admin.createUser({ email, password: senha, email_confirm: true });
-        if (authError) throw authError;
+        const { data: authUser, error: createUserError } = await supabaseService.auth.admin.createUser({ email, password: senha, email_confirm: true });
+        if (createUserError) throw createUserError;
 
         let roleName = 'vendedor';
         if (role_id) {
@@ -267,9 +274,13 @@ app.post('/api/team/add', async (req, res) => {
             if (r) roleName = r.nome;
         }
 
-        await supabaseService.from('perfis').insert({
+        const { error: insertError } = await supabaseService.from('perfis').insert({
             user_id: authUser.user.id, loja_id: perfil.loja_id, nome_usuario: nome, role: roleName, role_id
         });
+        if (insertError) {
+            await supabaseService.auth.admin.deleteUser(authUser.user.id);
+            throw insertError;
+        }
 
         res.status(201).json({ mensagem: "Usuário criado." });
     } catch (error) {
@@ -282,7 +293,8 @@ app.put('/api/team/:id', async (req, res) => {
     const { nome, email, senha, role_id } = req.body; 
 
     try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
+        const { data: { user }, error: authError } = await supabaseService.auth.getUser(req.authToken);
+        if (authError || !user) return res.status(401).json({ erro: "Token inválido." });
         const { data: perfilAdmin } = await supabaseService.from('perfis').select('loja_id, role').eq('user_id', user.id).single();
         
         if (perfilAdmin.role !== 'admin') return res.status(403).json({ erro: "Sem permissão." });
@@ -291,7 +303,10 @@ app.put('/api/team/:id', async (req, res) => {
         if (!perfilAlvo || perfilAlvo.loja_id !== perfilAdmin.loja_id) return res.status(403).json({ erro: "Usuário inválido." });
 
         const authUpdates = {};
-        if (senha && senha.length >= 6) authUpdates.password = senha;
+        if (senha) {
+            if (senha.length >= 6) authUpdates.password = senha;
+            else return res.status(400).json({ erro: "A senha deve ter no mínimo 6 caracteres." });
+        }
         if (email) authUpdates.email = email; 
 
         if (Object.keys(authUpdates).length > 0) {
@@ -309,7 +324,8 @@ app.put('/api/team/:id', async (req, res) => {
              updates.role = 'vendedor';
         }
 
-        await supabaseService.from('perfis').update(updates).eq('user_id', userIdAlvo);
+        const { error: updateError } = await supabaseService.from('perfis').update(updates).eq('user_id', userIdAlvo);
+        if (updateError) throw updateError;
 
         res.json({ mensagem: "Usuário atualizado." });
     } catch (error) {
@@ -321,7 +337,8 @@ app.put('/api/team/:id', async (req, res) => {
 app.delete('/api/team/:id', async (req, res) => {
     try {
         const userId = req.params.id;
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
+        const { data: { user }, error: authError } = await supabaseService.auth.getUser(req.authToken);
+        if (authError || !user) return res.status(401).json({ erro: "Token inválido." });
         const { data: perfil } = await supabaseService.from('perfis').select('loja_id, role').eq('user_id', user.id).single();
         
         if (perfil.role !== 'admin') return res.status(403).json({ erro: "Sem permissão." });
@@ -330,7 +347,8 @@ app.delete('/api/team/:id', async (req, res) => {
         const { data: alvo } = await supabaseService.from('perfis').select('loja_id').eq('user_id', userId).single();
         if (!alvo || alvo.loja_id !== perfil.loja_id) return res.status(403).json({ erro: "Usuário inválido." });
 
-        await supabaseService.auth.admin.deleteUser(userId);
+        const { error: delUserError } = await supabaseService.auth.admin.deleteUser(userId);
+        if (delUserError) throw delUserError;
         res.json({ mensagem: "Removido." });
     } catch (error) {
         res.status(500).json({ erro: error.message });
@@ -339,8 +357,8 @@ app.delete('/api/team/:id', async (req, res) => {
 
 app.get('/api/me/permissions', async (req, res) => {
     try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
-        if (!user) return res.status(401).json({});
+        const { data: { user }, error: authError } = await supabaseService.auth.getUser(req.authToken);
+        if (authError || !user) return res.status(401).json({});
 
         const { data: perfil } = await supabaseService.from('perfis').select('role, role_id').eq('user_id', user.id).single();
         
@@ -363,7 +381,8 @@ app.get('/api/me/permissions', async (req, res) => {
 
 app.get('/api/config/taxas', async (req, res) => {
     try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
+        const { data: { user }, error: authError } = await supabaseService.auth.getUser(req.authToken);
+        if (authError || !user) return res.status(401).json({ erro: "Token inválido." });
         const { data: perfil } = await supabaseService.from('perfis').select('loja_id').eq('user_id', user.id).single();
         
         if (!perfil) return res.status(403).json({ erro: "Perfil não encontrado" });
@@ -384,7 +403,8 @@ app.get('/api/config/taxas', async (req, res) => {
 app.post('/api/config/taxas', async (req, res) => {
     const { taxas } = req.body;
     try {
-        const { data: { user } } = await supabaseService.auth.getUser(req.authToken);
+        const { data: { user }, error: authError } = await supabaseService.auth.getUser(req.authToken);
+        if (authError || !user) return res.status(401).json({ erro: "Token inválido." });
         const { data: perfil } = await supabaseService.from('perfis').select('loja_id, role').eq('user_id', user.id).single();
 
         if (!perfil) return res.status(403).json({ erro: "Sem permissão." });
