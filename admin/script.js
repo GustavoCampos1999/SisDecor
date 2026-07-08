@@ -200,29 +200,24 @@ function prepararAcao(id, tipo) {
 }
 
 async function executarAcaoReal(acao) {
-    let updateData = {};
-    if (acao.tipo === 'desbloquear') {
-        updateData = { status_assinatura: 'ativo' };
-    } else if (acao.tipo === 'bloquear') {
-        updateData = { status_assinatura: 'suspenso' };
-    } else if (acao.tipo === 'excluir') {
-        try {
-            const { error: errLoja } = await _supabase.from('lojas').delete().eq('id', acao.id);
-            if (errLoja) throw errLoja;
-            alert('Loja excluída!');
-            carregarDados();
-        } catch(e) {
-            alert(e.message);
-        }
-        return;
-    }
+    let baseUrl = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000' 
+        : 'https://painel-de-controle-gcv.onrender.com';
 
     try {
-        const { error } = await _supabase.from('lojas').update(updateData).eq('id', acao.id);
-        if (error) throw error;
+        const response = await fetch(`${baseUrl}/admin/loja/${acao.id}/acao`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ acao: acao.tipo })
+        });
+        
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.erro || 'Erro ao executar ação');
+        
+        if (acao.tipo === 'excluir') alert('Loja excluída!');
         carregarDados();
     } catch (e) {
-        alert(e.message);
+        alert("Erro: " + e.message);
     }
 }
 
@@ -233,19 +228,21 @@ window.abrirModalFuncionarios = (lojaId, nomeLoja) => {
     listaDiv.innerHTML = '';
 
     const funcionarios = perfisCache.filter(p => p.loja_id == lojaId);
-
     if (funcionarios.length === 0) {
-        listaDiv.innerHTML = '<p style="text-align:center;color:#666">Nenhum funcionário encontrado.</p>';
+        listaDiv.innerHTML = '<p style="color:#888; text-align:center;">Nenhum funcionário encontrado.</p>';
         return;
     }
 
     funcionarios.forEach(f => {
         const div = document.createElement('div');
         div.className = 'user-item';
+        
+        const emailMembro = window.emailsMap && window.emailsMap[f.user_id] ? window.emailsMap[f.user_id] : 'Email oculto';
+        
         div.innerHTML = `
             <div>
-                <strong style="color:#fff">${f.nome_usuario || 'Sem nome'}</strong><br>
-                <small style="color:#888">${f.email || 'Email oculto'}</small>
+                <strong>${f.nome_usuario || 'Usuário Sem Nome'}</strong><br>
+                <span class="info-text">${emailMembro}</span>
             </div>
             <span class="user-role">${f.role || 'Vendedor'}</span>
         `;

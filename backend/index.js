@@ -129,6 +129,42 @@ app.get('/admin/users', async (req, res) => {
     }
 });
 
+// Nova rota para ações de administrador (contornar RLS)
+app.post('/admin/loja/:id/acao', async (req, res) => {
+    const { id } = req.params;
+    const { acao } = req.body; 
+
+    try {
+        if (acao === 'excluir') {
+            const { data: loja } = await supabaseService.from('lojas').select('owner_user_id').eq('id', id).single();
+            
+            // Exclui todas as dependências nas tabelas que o supabase não apaga sozinho (se não houver ON DELETE CASCADE)
+            await supabaseService.from('perfis').delete().eq('loja_id', id);
+            
+            if (loja && loja.owner_user_id) {
+                // Remove o usuário da autenticação para que ele não consiga mais logar
+                await supabaseService.auth.admin.deleteUser(loja.owner_user_id);
+            }
+            
+            // Por fim deleta a loja
+            const { error: errLoja } = await supabaseService.from('lojas').delete().eq('id', id);
+            if (errLoja) throw errLoja;
+
+        } else if (acao === 'bloquear') {
+            const { error } = await supabaseService.from('lojas').update({ status_assinatura: 'suspenso' }).eq('id', id);
+            if (error) throw error;
+        } else if (acao === 'desbloquear') {
+            const { error } = await supabaseService.from('lojas').update({ status_assinatura: 'ativo' }).eq('id', id);
+            if (error) throw error;
+        }
+
+        res.json({ sucesso: true });
+    } catch(err) {
+        console.error("Erro na ação de admin:", err);
+        res.status(500).json({ erro: err.message });
+    }
+});
+
 app.use('/api', authMiddleware);
 
 app.post('/api/calcular', (req, res) => {
