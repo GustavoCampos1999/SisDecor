@@ -156,7 +156,7 @@ function renderizarTabela(lojas, perfis) {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (btn.classList.contains('btn-funcionarios')) {
-                    abrirModalFuncionarios(btn.dataset.id, nomeLoja);
+                    abrirModalFuncionarios(btn.dataset.id, nomeLoja, loja.owner_user_id);
                 } else {
                     prepararAcao(btn.dataset.id, btn.dataset.action);
                 }
@@ -226,13 +226,13 @@ async function executarAcaoReal(acao) {
     }
 }
 
-window.abrirModalFuncionarios = (lojaId, nomeLoja) => {
+window.abrirModalFuncionarios = (lojaId, nomeLoja, ownerUserId) => {
     document.getElementById('modal-funcionarios').style.display = 'flex';
     document.querySelector('#modal-funcionarios .modal-title').textContent = `Equipe: ${nomeLoja}`;
     const listaDiv = document.getElementById('lista-funcionarios');
     listaDiv.innerHTML = '';
 
-    const funcionarios = perfisCache.filter(p => p.loja_id == lojaId);
+    const funcionarios = perfisCache.filter(p => p.loja_id == lojaId && p.user_id !== ownerUserId);
     if (funcionarios.length === 0) {
         listaDiv.innerHTML = '<p style="color:#888; text-align:center;">Nenhum funcionário encontrado.</p>';
         return;
