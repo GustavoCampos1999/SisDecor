@@ -50,6 +50,12 @@ export async function checkUserSession() {
                 }
             }
 
+            // Exibir botão de Acesso Admin de forma segura (só existe se for super admin)
+            const adminContainer = document.getElementById('admin-link-container');
+            if (adminContainer && perfil.is_super_admin) {
+                adminContainer.innerHTML = `<a href="admin/index.html" style="background-color: #931011; color: white; padding: 5px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">Painel Super Admin</a>`;
+            }
+
         } catch (error) {
             console.warn("Erro ao verificar sessão:", error.message);
         }
