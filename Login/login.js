@@ -23,6 +23,26 @@ formLogin.addEventListener('submit', async (e) => {
     if (!senha) {
         // Primeiro acesso (senha vazia)
         try {
+            // Verifica se o e-mail existe no backend
+            let baseUrl = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' 
+                ? 'http://localhost:3000' 
+                : 'https://painel-de-controle-gcv.onrender.com';
+            
+            const checkResp = await fetch(`${baseUrl}/api/check-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+
+            if (checkResp.ok) {
+                const { exists } = await checkResp.json();
+                if (!exists) {
+                    msgErro.textContent = 'Email ou senha incorretos.'; // Simula o erro padrão para não detalhar que foi só o e-mail
+                    msgErro.style.display = 'block';
+                    return;
+                }
+            }
+
             const { error } = await _supabase.auth.resetPasswordForEmail(email, {
                 redirectTo: window.location.origin + '/Login/update-password.html',
             });

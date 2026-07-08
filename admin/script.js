@@ -38,11 +38,15 @@ async function initAdmin() {
 
     document.getElementById('btn-salvar-nova-loja').addEventListener('click', async () => {
         const nome = document.getElementById('novo-nome').value;
+        const nomeDono = document.getElementById('novo-dono').value;
         const cnpj = document.getElementById('novo-cnpj').value;
         const telefone = document.getElementById('novo-telefone').value;
         const email = document.getElementById('novo-email').value;
 
-        if (!nome || !email) {
+        if (!nome || !email || !nomeDono) {
+            alert('Nome da Empresa, Nome do Proprietário e E-mail são obrigatórios!');
+            return;
+        }
             alert('Nome e E-mail são obrigatórios!');
             return;
         }
@@ -59,7 +63,7 @@ async function initAdmin() {
             const response = await fetch(`${baseUrl}/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nome_empresa: nome, cnpj: cnpj, telefone: telefone, email: email })
+                body: JSON.stringify({ nome_empresa: nome, nome_dono: nomeDono, cnpj: cnpj, telefone: telefone, email: email })
             });
 
             const data = await response.json();
@@ -147,6 +151,10 @@ function renderizarTabela(lojas, perfis) {
             </td>
         `;
         
+        tr.addEventListener('click', () => {
+            abrirModalEditarLoja(loja, dono, emailDono);
+        });
+
         tr.querySelectorAll('.action-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -248,4 +256,100 @@ window.abrirModalFuncionarios = (lojaId, nomeLoja) => {
         `;
         listaDiv.appendChild(div);
     });
+};
+
+window.abrirModalEditarLoja = (loja, dono, emailDono) => {
+    document.getElementById('modal-editar-loja').style.display = 'flex';
+    const container = document.getElementById('dados-loja-container');
+    
+    const ownerName = dono.nome_usuario || 'Dono';
+    const lojaName = loja.nome || loja.nome_empresa || ownerName;
+    const cpfCnpj = loja.cnpj || 'Não informado';
+    const telefone = loja.telefone || 'Não informado';
+    
+    container.innerHTML = `
+        <div class="edit-row">
+            <div>
+                <span class="edit-label">Nome da Empresa/Loja</span>
+                <span class="edit-value" id="val-nome_empresa">${lojaName}</span>
+                <input type="text" id="inp-nome_empresa" class="edit-input" value="${lojaName}">
+            </div>
+            <button class="btn-edit-field" onclick="toggleEdit('nome_empresa', '${loja.id}', '${loja.owner_user_id}')">✏️</button>
+        </div>
+        <div class="edit-row">
+            <div>
+                <span class="edit-label">Nome do Proprietário</span>
+                <span class="edit-value" id="val-nome_dono">${ownerName}</span>
+                <input type="text" id="inp-nome_dono" class="edit-input" value="${ownerName}">
+            </div>
+            <button class="btn-edit-field" onclick="toggleEdit('nome_dono', '${loja.id}', '${loja.owner_user_id}')">✏️</button>
+        </div>
+        <div class="edit-row">
+            <div>
+                <span class="edit-label">E-mail de Login</span>
+                <span class="edit-value" id="val-email">${emailDono}</span>
+                <input type="email" id="inp-email" class="edit-input" value="${emailDono}">
+            </div>
+            <button class="btn-edit-field" onclick="toggleEdit('email', '${loja.id}', '${loja.owner_user_id}')">✏️</button>
+        </div>
+        <div class="edit-row">
+            <div>
+                <span class="edit-label">CPF / CNPJ</span>
+                <span class="edit-value" id="val-cnpj">${cpfCnpj}</span>
+                <input type="text" id="inp-cnpj" class="edit-input" value="${cpfCnpj}">
+            </div>
+            <button class="btn-edit-field" onclick="toggleEdit('cnpj', '${loja.id}', '${loja.owner_user_id}')">✏️</button>
+        </div>
+        <div class="edit-row" style="border-bottom:none;">
+            <div>
+                <span class="edit-label">Telefone / WhatsApp</span>
+                <span class="edit-value" id="val-telefone">${telefone}</span>
+                <input type="text" id="inp-telefone" class="edit-input" value="${telefone}">
+            </div>
+            <button class="btn-edit-field" onclick="toggleEdit('telefone', '${loja.id}', '${loja.owner_user_id}')">✏️</button>
+        </div>
+    `;
+};
+
+window.toggleEdit = async (field, lojaId, ownerUserId) => {
+    const valSpan = document.getElementById(`val-${field}`);
+    const inputField = document.getElementById(`inp-${field}`);
+    const isEditing = inputField.style.display === 'inline-block';
+    
+    if (!isEditing) {
+        valSpan.style.display = 'none';
+        inputField.style.display = 'inline-block';
+        inputField.focus();
+    } else {
+        const newValue = inputField.value;
+        if (!newValue) {
+            alert('O campo não pode ficar vazio!');
+            return;
+        }
+
+        const baseUrl = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : 'https://painel-de-controle-gcv.onrender.com';
+
+        try {
+            const resp = await fetch(`${baseUrl}/admin/loja/${lojaId}/editar`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ field, value: newValue, userId: ownerUserId })
+            });
+
+            if (!resp.ok) {
+                const data = await resp.json();
+                throw new Error(data.erro || 'Erro ao editar.');
+            }
+
+            valSpan.textContent = newValue;
+            valSpan.style.display = 'inline-block';
+            inputField.style.display = 'none';
+            carregarDados(); // Atualiza a tabela por trás
+
+        } catch(e) {
+            alert(e.message);
+        }
+    }
 };

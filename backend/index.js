@@ -69,7 +69,7 @@ app.post('/api/check-email', async (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-    const { email, cnpj, nome_empresa, telefone } = req.body;
+    const { email, cnpj, nome_empresa, telefone, nome_dono } = req.body;
     if (!email || !nome_empresa) return res.status(400).json({ erro: "Dados incompletos." });
     
     // CNPJ ou CPF opcional (remover pontuações se existir)
@@ -104,7 +104,7 @@ app.post('/register', async (req, res) => {
             user_id: userData.user.id,
             loja_id: lojaData.id,
             role: 'admin',
-            nome_usuario: 'Dono'
+            nome_usuario: nome_dono || 'Dono'
         });
         if (perfilError) throw perfilError;
 
@@ -161,6 +161,50 @@ app.post('/admin/loja/:id/acao', async (req, res) => {
         res.json({ sucesso: true });
     } catch(err) {
         console.error("Erro na ação de admin:", err);
+        res.status(500).json({ erro: err.message });
+    }
+});
+
+// Rota para editar informações da loja e do dono
+app.put('/admin/loja/:id/editar', async (req, res) => {
+    const { id } = req.params;
+    const { field, value, userId } = req.body;
+
+    try {
+        if (field === 'email') {
+            if (!userId) throw new Error("userId necessário para atualizar e-mail.");
+            const { error } = await supabaseService.auth.admin.updateUserById(userId, { email: value });
+            if (error) throw error;
+        } else if (field === 'nome_dono') {
+            if (!userId) throw new Error("userId necessário.");
+            const { error } = await supabaseService.from('perfis').update({ nome_usuario: value }).eq('user_id', userId);
+            if (error) throw error;
+        } else if (field === 'nome_empresa') {
+            const { error } = await supabaseService.from('lojas').update({ nome: value, nome_empresa: value }).eq('id', id);
+            if (error) throw error;
+        } else if (field === 'cnpj' || field === 'telefone') {
+            const { error } = await supabaseService.from('lojas').update({ [field]: value }).eq('id', id);
+            if (error) throw error;
+        } else {
+            throw new Error("Campo inválido para edição.");
+        }
+        res.json({ sucesso: true });
+    } catch(err) {
+        console.error("Erro na edição:", err);
+        res.status(500).json({ erro: err.message });
+    }
+});
+
+// Checa se o e-mail existe no sistema antes de disparar o esqueci a senha
+app.post('/api/check-email', async (req, res) => {
+    const { email } = req.body;
+    try {
+        const { data: { users }, error } = await supabaseService.auth.admin.listUsers();
+        if (error) throw error;
+        
+        const exists = users.some(u => u.email === email);
+        res.json({ exists });
+    } catch(err) {
         res.status(500).json({ erro: err.message });
     }
 });
