@@ -149,8 +149,12 @@ function renderizarTabela(lojas, perfis) {
         
         tr.querySelectorAll('.action-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                e.stopPropagation(); 
-                prepararAcao(e.target.dataset.id, e.target.dataset.action);
+                e.stopPropagation();
+                if (btn.classList.contains('btn-funcionarios')) {
+                    abrirModalFuncionarios(btn.dataset.id, nomeLoja);
+                } else {
+                    prepararAcao(btn.dataset.id, btn.dataset.action);
+                }
             });
         });
 
@@ -174,6 +178,7 @@ function prepararAcao(id, tipo) {
         titulo.style.color = "#dc3545";
         texto.innerHTML = "O usuário não conseguirá mais fazer login.<br>Deseja continuar?";
         btn.textContent = "Bloquear";
+        btn.className = "action-btn btn-bloquear";
         modalConfirm.style.display = 'flex';
     }
     else if (tipo === 'desbloquear') {
@@ -181,6 +186,7 @@ function prepararAcao(id, tipo) {
         titulo.style.color = "#ffc107";
         texto.innerHTML = "O acesso será restaurado.";
         btn.textContent = "Desbloquear";
+        btn.className = "action-btn btn-desbloquear";
         modalConfirm.style.display = 'flex';
     }
     else if (tipo === 'excluir') {
@@ -188,6 +194,7 @@ function prepararAcao(id, tipo) {
         titulo.style.color = "#dc3545";
         texto.innerHTML = "Esta ação é irreversível e removerá todos os dados da loja.";
         btn.textContent = "Excluir";
+        btn.className = "action-btn btn-excluir";
         modalConfirm.style.display = 'flex';
     }
 }
@@ -221,7 +228,7 @@ async function executarAcaoReal(acao) {
 
 window.abrirModalFuncionarios = (lojaId, nomeLoja) => {
     document.getElementById('modal-funcionarios').style.display = 'flex';
-    document.querySelector('.modal-title').textContent = `Equipe: ${nomeLoja}`;
+    document.querySelector('#modal-funcionarios .modal-title').textContent = `Equipe: ${nomeLoja}`;
     const listaDiv = document.getElementById('lista-funcionarios');
     listaDiv.innerHTML = '';
 
