@@ -171,11 +171,11 @@ app.put('/admin/loja/:id/editar', async (req, res) => {
     const { field, value, userId } = req.body;
 
     try {
-        if (field === 'email') {
+        if (field === 'email' || field.startsWith('email_membro')) {
             if (!userId) throw new Error("userId necessário para atualizar e-mail.");
             const { error } = await supabaseService.auth.admin.updateUserById(userId, { email: value });
             if (error) throw error;
-        } else if (field === 'nome_dono') {
+        } else if (field === 'nome_dono' || field.startsWith('nome_membro')) {
             if (!userId) throw new Error("userId necessário.");
             const { error } = await supabaseService.from('perfis').update({ nome_usuario: value }).eq('user_id', userId);
             if (error) throw error;
@@ -205,6 +205,24 @@ app.post('/api/check-email', async (req, res) => {
         const exists = users.some(u => u.email === email);
         res.json({ exists });
     } catch(err) {
+        res.status(500).json({ erro: err.message });
+    }
+});
+
+// Nova rota para excluir membro da equipe (Admin)
+app.delete('/admin/membro/:userId', async (req, res) => {
+    const { userId } = req.params;
+    try {
+        // Primeiro remove do perfis (isso vai tirar ele do banco relacional)
+        await supabaseService.from('perfis').delete().eq('user_id', userId);
+        
+        // Remove do Auth para não logar mais
+        const { error } = await supabaseService.auth.admin.deleteUser(userId);
+        if (error) throw error;
+        
+        res.json({ sucesso: true });
+    } catch(err) {
+        console.error("Erro ao excluir membro:", err);
         res.status(500).json({ erro: err.message });
     }
 });

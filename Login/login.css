@@ -49,6 +49,13 @@
         .login-container button:hover {
             background-color: #680d0f;
         }
+        #btn-contato {
+            transition: all 0.3s;
+        }
+        #btn-contato:hover {
+            background-color: #931011 !important;
+            color: white !important;
+        }
         #login-logo {
             max-width: 150px; 
             height: auto;

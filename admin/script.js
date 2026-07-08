@@ -241,18 +241,48 @@ window.abrirModalFuncionarios = (lojaId, nomeLoja) => {
     funcionarios.forEach(f => {
         const div = document.createElement('div');
         div.className = 'user-item';
+        div.style = 'display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;';
         
         const emailMembro = window.emailsMap && window.emailsMap[f.user_id] ? window.emailsMap[f.user_id] : 'Email oculto';
         
         div.innerHTML = `
             <div>
-                <strong>${f.nome_usuario || 'Usuário Sem Nome'}</strong><br>
-                <span class="info-text">${emailMembro}</span>
+                <strong id="val-nome_membro_${f.user_id}">${f.nome_usuario || 'Usuário Sem Nome'}</strong>
+                <input type="text" id="inp-nome_membro_${f.user_id}" class="edit-input" value="${f.nome_usuario || ''}" style="display:none; width: 140px; background: #333; color: white; border: 1px solid #555; padding: 2px;">
+                <button class="btn-edit-field" onclick="toggleEdit('nome_membro_${f.user_id}', '${lojaId}', '${f.user_id}')" style="background:none; border:none; color:#e06c6e; cursor:pointer;">✏️</button>
+                <br>
+                <span class="info-text" id="val-email_membro_${f.user_id}">${emailMembro}</span>
+                <input type="email" id="inp-email_membro_${f.user_id}" class="edit-input" value="${emailMembro}" style="display:none; width: 170px; background: #333; color: white; border: 1px solid #555; padding: 2px;">
+                <button class="btn-edit-field" onclick="toggleEdit('email_membro_${f.user_id}', '${lojaId}', '${f.user_id}')" style="background:none; border:none; color:#e06c6e; cursor:pointer;">✏️</button>
             </div>
-            <span class="user-role">${f.role || 'Vendedor'}</span>
+            <div style="text-align: right;">
+                <span class="user-role">${f.role || 'Vendedor'}</span><br>
+                <button class="action-btn btn-excluir" onclick="excluirMembro('${f.user_id}', '${lojaId}')" style="margin-top: 5px; padding: 4px 8px; font-size: 11px;">Excluir</button>
+            </div>
         `;
         listaDiv.appendChild(div);
     });
+};
+
+window.excluirMembro = async (userId, lojaId) => {
+    if (!confirm('Deseja realmente excluir este membro? Ele perderá acesso ao sistema.')) return;
+    
+    let baseUrl = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000' 
+        : 'https://painel-de-controle-gcv.onrender.com';
+
+    try {
+        const resp = await fetch(`${baseUrl}/admin/membro/${userId}`, { method: 'DELETE' });
+        if (!resp.ok) {
+            const data = await resp.json();
+            throw new Error(data.erro || 'Erro ao excluir membro.');
+        }
+        alert('Membro excluído!');
+        carregarDados();
+        document.getElementById('modal-funcionarios').style.display = 'none';
+    } catch(e) {
+        alert(e.message);
+    }
 };
 
 window.abrirModalEditarLoja = (loja, dono, emailDono) => {
