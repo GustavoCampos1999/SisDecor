@@ -14,11 +14,13 @@ form.addEventListener('submit', async (e) => {
 
     if (inputPass.value.length < 6) {
         msgErro.textContent = 'A senha deve ter no mínimo 6 caracteres.';
+        msgErro.style.display = 'block';
         return;
     }
 
     if (inputPass.value !== inputConfirm.value) {
         msgErro.textContent = 'As senhas não coincidem.';
+        msgErro.style.display = 'block';
         return;
     }
 
