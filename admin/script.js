@@ -47,9 +47,6 @@ async function initAdmin() {
             alert('Nome da Empresa, Nome do Proprietário e E-mail são obrigatórios!');
             return;
         }
-            alert('Nome e E-mail são obrigatórios!');
-            return;
-        }
 
         const btn = document.getElementById('btn-salvar-nova-loja');
         btn.disabled = true;
