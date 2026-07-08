@@ -81,11 +81,14 @@ app.post('/register', async (req, res) => {
             if (existingLoja) return res.status(409).json({ erro: "CNPJ/CPF já cadastrado." });
         }
 
-        // Gera uma senha aleatória segura já que o usuário vai recuperar a senha depois
-        const randomPassword = Math.random().toString(36).slice(-10) + "A1@";
+        // Envia um convite de cadastro usando o fluxo do Supabase
+        // O Supabase enviará um e-mail com link que redirecionará para o site
+        const redirectToUrl = req.headers.origin 
+            ? `${req.headers.origin}/Login/finalizar.html` 
+            : 'http://localhost:3000/Login/finalizar.html';
 
-        const { data: userData, error: userError } = await supabaseService.auth.admin.createUser({
-            email, password: randomPassword, email_confirm: true
+        const { data: userData, error: userError } = await supabaseService.auth.admin.inviteUserByEmail(email, {
+            redirectTo: redirectToUrl
         });
         if (userError) throw userError;
 
@@ -182,7 +185,7 @@ app.put('/admin/loja/:id/editar', async (req, res) => {
         } else if (field === 'nome_empresa') {
             const { error } = await supabaseService.from('lojas').update({ nome: value, nome_empresa: value }).eq('id', id);
             if (error) throw error;
-        } else if (field === 'cnpj' || field === 'telefone') {
+        } else if (field === 'cnpj' || field === 'telefone' || field === 'endereco') {
             const { error } = await supabaseService.from('lojas').update({ [field]: value }).eq('id', id);
             if (error) throw error;
         } else {

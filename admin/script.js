@@ -296,6 +296,7 @@ window.abrirModalEditarLoja = (loja, dono, emailDono) => {
     const lojaName = loja.nome || loja.nome_empresa || ownerName;
     const cpfCnpj = loja.cnpj || 'Não informado';
     const telefone = loja.telefone || 'Não informado';
+    const endereco = loja.endereco || 'Não informado';
     
     container.innerHTML = `
         <div class="edit-row">
@@ -337,6 +338,14 @@ window.abrirModalEditarLoja = (loja, dono, emailDono) => {
                 <input type="text" id="inp-telefone" class="edit-input" value="${telefone}">
             </div>
             <button class="btn-edit-field" onclick="toggleEdit('telefone', '${loja.id}', '${loja.owner_user_id}')">✏️</button>
+        </div>
+        <div class="edit-row">
+            <div>
+                <span class="edit-label">Endereço</span>
+                <span class="edit-value" id="val-endereco">${endereco}</span>
+                <input type="text" id="inp-endereco" class="edit-input" value="${endereco}">
+            </div>
+            <button class="btn-edit-field" onclick="toggleEdit('endereco', '${loja.id}', '${loja.owner_user_id}')">✏️</button>
         </div>
         <div class="edit-row" style="border-bottom:none;">
             <div>

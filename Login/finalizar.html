@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Cadastro - SisDecor</title>
+    <link rel="stylesheet" href="login.css">
+    <link rel="icon" type="image/png" href="../images/favicon.ico">
+    <style>
+        .login-container { width: 450px; max-width: 95%; max-height: 90vh; overflow-y: auto; }
+        .disabled-input { background-color: #e9ecef; color: #6c757d; cursor: not-allowed; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .phone-row { display: flex; gap: 10px; margin-bottom: 5px; align-items: center; }
+        .btn-add-phone { background-color: #28a745; color: white; border: none; border-radius: 4px; padding: 10px; cursor: pointer; width: auto !important; flex-shrink: 0; }
+        .btn-add-phone:hover { background-color: #218838; }
+        .btn-remove-phone { background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 10px; cursor: pointer; width: auto !important; flex-shrink: 0; }
+        .btn-remove-phone:hover { background-color: #c82333; }
+        hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <img src="../images/MainLogo.png" alt="Logo" id="login-logo">
+        <h2 style="margin-top: 0; color: #333; font-size: 22px;">Finalize seu Cadastro</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Confirme seus dados e crie sua senha de acesso.</p>
+        
+        <div id="loading-message" style="color: #888; margin-bottom: 20px;">Carregando seus dados...</div>
+
+        <form id="form-finalizar" style="display: none;">
+            <div class="input-group">
+                <label>Nome da Empresa/Loja</label>
+                <input type="text" id="inp-nome-empresa" required>
+            </div>
+            
+            <div class="input-group">
+                <label>Nome do Proprietário</label>
+                <input type="text" id="inp-nome-dono" required>
+            </div>
+
+            <div class="input-group">
+                <label>CPF / CNPJ</label>
+                <input type="text" id="inp-cnpj" class="disabled-input" disabled>
+            </div>
+
+            <div class="input-group">
+                <label>E-mail de Login</label>
+                <input type="email" id="inp-email" class="disabled-input" disabled>
+            </div>
+
+            <div class="input-group">
+                <label>Endereço</label>
+                <input type="text" id="inp-endereco" placeholder="Ex: Rua das Flores, 123 - Centro">
+            </div>
+
+            <div class="input-group">
+                <label>Telefones / WhatsApp</label>
+                <div id="telefones-container">
+                    <div class="phone-row">
+                        <input type="text" class="inp-telefone" placeholder="Telefone principal" required>
+                        <button type="button" class="btn-add-phone" title="Adicionar mais um número">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="input-group">
+                <label>Criar Senha (min. 6 caracteres)</label>
+                <input type="password" id="inp-senha" required minlength="6">
+            </div>
+            <div class="input-group">
+                <label>Confirmar Senha</label>
+                <input type="password" id="inp-senha-confirm" required minlength="6">
+            </div>
+
+            <button type="submit" id="btn-submit" style="margin-top: 10px;">Finalizar e Entrar</button>
+            <p id="mensagem-erro" class="message-error"></p>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="finalizar.js"></script>
+</body>
+</html>
