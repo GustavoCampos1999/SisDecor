@@ -26,9 +26,22 @@ export async function checkUserSession() {
                 if (loja) {
                     if (loja.status_assinatura === 'suspenso') {
                         if (!isLogin) {
-                            alert(`ACESSO BLOQUEADO\n\nAcesso suspenso pelo administrador.\n\nEntre em contato para regularizar.`);
-                            await _supabase.auth.signOut();
-                            window.location.href = 'Login/login.html';
+                            const modalBloqueado = document.getElementById('modal-bloqueado');
+                            const btnSairBloqueado = document.getElementById('btn-sair-bloqueado');
+                            if (modalBloqueado) {
+                                modalBloqueado.style.display = 'flex';
+                                if (btnSairBloqueado) {
+                                    btnSairBloqueado.onclick = async () => {
+                                        await _supabase.auth.signOut();
+                                        window.location.href = 'Login/login.html';
+                                    };
+                                }
+                            } else {
+                                // Fallback
+                                alert(`ACESSO BLOQUEADO\n\nAcesso suspenso pelo administrador.\n\nEntre em contato para regularizar.`);
+                                await _supabase.auth.signOut();
+                                window.location.href = 'Login/login.html';
+                            }
                             return;
                         }
                     }
