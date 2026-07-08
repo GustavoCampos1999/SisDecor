@@ -12,6 +12,7 @@
 .calculator-header {
     display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding: 10px 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
+
 .calculator-header h2 { margin: 0; flex-grow: 1; text-align: center; order: 2; }
 #btn-voltar-clientes { padding: 8px 12px; background-color: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; order: 1; }
 #btn-voltar-clientes:hover { background-color: #5a6268; }
