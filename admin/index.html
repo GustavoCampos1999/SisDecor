@@ -19,18 +19,20 @@
 
         <div id="loading" class="loading">Verificando permissões e carregando dados...</div>
         
-        <table id="tabela-lojas" style="display:none;">
-            <thead>
-                <tr>
-                    <th>Loja / Empresa</th>
-                    <th>Login (Dono)</th>
-                    <th>CNPJ / CPF</th>
-                    <th>Status</th>
-                    <th style="text-align: right;">Ações</th>
-                </tr>
-            </thead>
-            <tbody id="tbody-lojas"></tbody>
-        </table>
+        <div style="overflow-x: auto; width: 100%;">
+            <table id="tabela-lojas" style="display:none; min-width: 800px;">
+                <thead>
+                    <tr>
+                        <th>Loja / Empresa</th>
+                        <th>Login (Dono)</th>
+                        <th>CNPJ / CPF</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-lojas"></tbody>
+            </table>
+        </div>
     </div>
 
     <div id="modal-funcionarios" class="modal-overlay">
