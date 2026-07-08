@@ -246,16 +246,19 @@ window.abrirModalFuncionarios = (lojaId, nomeLoja) => {
         const emailMembro = window.emailsMap && window.emailsMap[f.user_id] ? window.emailsMap[f.user_id] : 'Email oculto';
         
         div.innerHTML = `
-            <div>
-                <strong id="val-nome_membro_${f.user_id}">${f.nome_usuario || 'Usuário Sem Nome'}</strong>
-                <input type="text" id="inp-nome_membro_${f.user_id}" class="edit-input" value="${f.nome_usuario || ''}" style="display:none; width: 140px; background: #333; color: white; border: 1px solid #555; padding: 2px;">
-                <button class="btn-edit-field" onclick="toggleEdit('nome_membro_${f.user_id}', '${lojaId}', '${f.user_id}')" style="background:none; border:none; color:#e06c6e; cursor:pointer;">✏️</button>
-                <br>
-                <span class="info-text" id="val-email_membro_${f.user_id}">${emailMembro}</span>
-                <input type="email" id="inp-email_membro_${f.user_id}" class="edit-input" value="${emailMembro}" style="display:none; width: 170px; background: #333; color: white; border: 1px solid #555; padding: 2px;">
-                <button class="btn-edit-field" onclick="toggleEdit('email_membro_${f.user_id}', '${lojaId}', '${f.user_id}')" style="background:none; border:none; color:#e06c6e; cursor:pointer;">✏️</button>
+            <div style="flex: 1; overflow: hidden; padding-right: 10px;">
+                <div style="display: flex; align-items: center; margin-bottom: 2px;">
+                    <strong id="val-nome_membro_${f.user_id}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${f.nome_usuario || 'Usuário Sem Nome'}</strong>
+                    <input type="text" id="inp-nome_membro_${f.user_id}" class="edit-input" value="${f.nome_usuario || ''}" style="display:none; width: 120px; background: #333; color: white; border: 1px solid #555; padding: 2px;">
+                    <button class="btn-edit-field" onclick="toggleEdit('nome_membro_${f.user_id}', '${lojaId}', '${f.user_id}')" style="background:none; border:none; color:#e06c6e; cursor:pointer; padding-left: 5px;">✏️</button>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <span class="info-text" id="val-email_membro_${f.user_id}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">${emailMembro}</span>
+                    <input type="email" id="inp-email_membro_${f.user_id}" class="edit-input" value="${emailMembro}" style="display:none; width: 140px; background: #333; color: white; border: 1px solid #555; padding: 2px;">
+                    <button class="btn-edit-field" onclick="toggleEdit('email_membro_${f.user_id}', '${lojaId}', '${f.user_id}')" style="background:none; border:none; color:#e06c6e; cursor:pointer; padding-left: 5px;">✏️</button>
+                </div>
             </div>
-            <div style="text-align: right;">
+            <div style="text-align: right; min-width: 65px;">
                 <span class="user-role">${f.role || 'Vendedor'}</span><br>
                 <button class="action-btn btn-excluir" onclick="excluirMembro('${f.user_id}', '${lojaId}')" style="margin-top: 5px; padding: 4px 8px; font-size: 11px;">Excluir</button>
             </div>
@@ -327,13 +330,19 @@ window.abrirModalEditarLoja = (loja, dono, emailDono) => {
             </div>
             <button class="btn-edit-field" onclick="toggleEdit('cnpj', '${loja.id}', '${loja.owner_user_id}')">✏️</button>
         </div>
-        <div class="edit-row" style="border-bottom:none;">
+        <div class="edit-row">
             <div>
                 <span class="edit-label">Telefone / WhatsApp</span>
                 <span class="edit-value" id="val-telefone">${telefone}</span>
                 <input type="text" id="inp-telefone" class="edit-input" value="${telefone}">
             </div>
             <button class="btn-edit-field" onclick="toggleEdit('telefone', '${loja.id}', '${loja.owner_user_id}')">✏️</button>
+        </div>
+        <div class="edit-row" style="border-bottom:none;">
+            <div>
+                <span class="edit-label">Data de Registro no Sistema</span>
+                <span class="edit-value" style="color: #bbb;">${new Date(loja.created_at).toLocaleDateString('pt-BR')}</span>
+            </div>
         </div>
     `;
 };
