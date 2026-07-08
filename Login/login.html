@@ -18,7 +18,7 @@
             </div>
             <div>
                 <label for="senha">Senha</label>
-                <input type="password" id="senha" placeholder="Senha" required>
+                <input type="password" id="senha" placeholder="Senha">
             </div>
             
             <div class="forgot-password-container">
@@ -31,9 +31,21 @@
 
         <div class="login-link-container">
             <p class="login-description" style="margin-bottom: 5px;">Não tem uma conta?</p> 
-            <a href="register.html" class="login-link">
-             <strong>Registre sua loja aqui</strong>
-            </a>
+            <button id="btn-contato" style="background-color: transparent; border: 2px solid #931011; color: #931011; border-radius: 5px; padding: 10px 15px; font-weight: bold; cursor: pointer; width: 100%;">Entre em contato</button>
+        </div>
+    </div>
+
+    <!-- Modal WhatsApp -->
+    <div id="modal-whatsapp" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 350px; text-align: center; position: relative;">
+            <button id="btn-fechar-whatsapp" style="position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #555; padding: 0;">&times;</button>
+            <h2 style="margin-top: 0; color: #333; font-size: 20px;">Fale Conosco</h2>
+            <p style="color: #666; margin-bottom: 20px; font-size: 14px;">Entre em contato pelo WhatsApp para adquirir sua licença ou tirar dúvidas.</p>
+            <a href="https://wa.link/gfrggv" target="_blank" style="display: inline-block; background-color: #25D366; color: white; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin-bottom: 20px; width: 100%; box-sizing: border-box;">Conversar no WhatsApp</a>
+            <div>
+                <img src="../images/qr.png" alt="QR Code WhatsApp" style="width: 200px; max-width: 100%; border: 1px solid #eee; border-radius: 10px;">
+                <p style="color: #888; font-size: 12px; margin-top: 10px;">Ou escaneie o código acima</p>
+            </div>
         </div>
     </div>
 

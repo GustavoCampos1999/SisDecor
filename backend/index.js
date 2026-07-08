@@ -69,18 +69,23 @@ app.post('/api/check-email', async (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-    const { email, password, cnpj, nome_empresa, telefone, nome_usuario } = req.body;
-    if (!email || !password || !cnpj) return res.status(400).json({ erro: "Dados incompletos." });
+    const { email, cnpj, nome_empresa, telefone } = req.body;
+    if (!email || !nome_empresa) return res.status(400).json({ erro: "Dados incompletos." });
     
-    const cnpjLimpo = String(cnpj).replace(/\D/g, '');
-    if (cnpjLimpo.length !== 14) return res.status(400).json({ erro: "CNPJ inválido." });
+    // CNPJ ou CPF opcional (remover pontuações se existir)
+    const documento = cnpj ? String(cnpj).replace(/\D/g, '') : null;
 
     try {
-        const { data: existingLoja } = await supabaseService.from('lojas').select('id').eq('cnpj', cnpjLimpo).maybeSingle();
-        if (existingLoja) return res.status(409).json({ erro: "CNPJ já cadastrado." });
+        if (documento) {
+            const { data: existingLoja } = await supabaseService.from('lojas').select('id').eq('cnpj', documento).maybeSingle();
+            if (existingLoja) return res.status(409).json({ erro: "CNPJ/CPF já cadastrado." });
+        }
+
+        // Gera uma senha aleatória segura já que o usuário vai recuperar a senha depois
+        const randomPassword = Math.random().toString(36).slice(-10) + "A1@";
 
         const { data: userData, error: userError } = await supabaseService.auth.admin.createUser({
-            email, password, email_confirm: true
+            email, password: randomPassword, email_confirm: true
         });
         if (userError) throw userError;
 
@@ -89,10 +94,9 @@ app.post('/register', async (req, res) => {
             .insert({
                 nome: nome_empresa,
                 owner_user_id: userData.user.id,
-                cnpj: cnpjLimpo,
+                cnpj: documento,
                 telefone: telefone,
-                status_assinatura: 'trialing',
-                data_fim_teste: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                status_assinatura: 'ativo'
             }).select('id').single();
         if (lojaError) throw lojaError;
 
@@ -100,7 +104,7 @@ app.post('/register', async (req, res) => {
             user_id: userData.user.id,
             loja_id: lojaData.id,
             role: 'admin',
-            nome_usuario
+            nome_usuario: 'Dono'
         });
         if (perfilError) throw perfilError;
 
@@ -108,6 +112,20 @@ app.post('/register', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ erro: error.message });
+    }
+});
+
+// Nova rota para o admin buscar o mapeamento de ID -> E-mail
+app.get('/admin/users', async (req, res) => {
+    try {
+        const { data: { users }, error } = await supabaseService.auth.admin.listUsers();
+        if (error) throw error;
+        
+        const map = {};
+        users.forEach(u => map[u.id] = u.email);
+        res.json(map);
+    } catch(err) {
+        res.status(500).json({ erro: err.message });
     }
 });
 

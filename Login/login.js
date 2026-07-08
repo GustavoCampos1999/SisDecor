@@ -14,6 +14,27 @@ formLogin.addEventListener('submit', async (e) => {
     msgErro.textContent = ''; 
     msgErro.style.display = 'none'; 
 
+    if (!email) {
+        msgErro.textContent = 'Por favor, digite seu e-mail.';
+        msgErro.style.display = 'block';
+        return;
+    }
+
+    if (!senha) {
+        // Primeiro acesso (senha vazia)
+        try {
+            const { error } = await _supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + '/Login/update-password.html',
+            });
+            if (error) throw error;
+            alert('Um link de definição de senha foi enviado para seu e-mail! Verifique sua caixa de entrada.');
+        } catch(err) {
+            msgErro.textContent = 'Erro ao enviar link de recuperação: ' + err.message;
+            msgErro.style.display = 'block';
+        }
+        return;
+    }
+
     try {
         const { data, error } = await _supabase.auth.signInWithPassword({
             email: email, 
@@ -44,3 +65,12 @@ formLogin.addEventListener('submit', async (e) => {
         msgErro.style.display = 'block';
     }
 });
+
+// Modal WhatsApp
+const btnContato = document.getElementById('btn-contato');
+const modalWhatsapp = document.getElementById('modal-whatsapp');
+const btnFecharWhatsapp = document.getElementById('btn-fechar-whatsapp');
+
+if (btnContato) btnContato.addEventListener('click', () => modalWhatsapp.style.display = 'flex');
+if (btnFecharWhatsapp) btnFecharWhatsapp.addEventListener('click', () => modalWhatsapp.style.display = 'none');
+if (modalWhatsapp) modalWhatsapp.addEventListener('click', (e) => { if(e.target === modalWhatsapp) modalWhatsapp.style.display = 'none'; });

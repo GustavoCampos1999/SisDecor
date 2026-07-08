@@ -24,63 +24,19 @@ export async function checkUserSession() {
                 const loja = perfil.lojas;
                 
                 if (loja) {
-                    const agora = new Date();
-                    let bloqueado = false;
-                    let motivo = "";
-                    let dataAlvo = null;
-                    let textoStatus = "";
-
                     if (loja.status_assinatura === 'suspenso') {
-                        bloqueado = true;
-                        motivo = "Acesso suspenso pelo administrador.";
-                        textoStatus = "Suspenso";
-                    }
-                    else if (loja.status_assinatura === 'teste') {
-                        const fimTeste = new Date(loja.data_fim_teste);
-                        dataAlvo = fimTeste;
-                        
-                        if (agora > fimTeste) {
-                            bloqueado = true;
-                            motivo = "Seu período de teste de 7 dias acabou.";
-                        } else {
-                            textoStatus = "Teste Grátis";
+                        if (!isLogin) {
+                            alert(`ACESSO BLOQUEADO\n\nAcesso suspenso pelo administrador.\n\nEntre em contato para regularizar.`);
+                            await _supabase.auth.signOut();
+                            window.location.href = 'Login/login.html';
+                            return;
                         }
                     }
-                    else if (loja.status_assinatura === 'ativo') {
-                        const fimAssinatura = new Date(loja.data_expiracao_assinatura);
-                        dataAlvo = fimAssinatura;
-
-                        if (agora > fimAssinatura) {
-                            bloqueado = true;
-                            motivo = "Sua assinatura expirou. Renove para continuar.";
-                        } else {
-                            textoStatus = "Assinatura Ativa";
-                        }
-                    }
-
-                    if (bloqueado && !isLogin) {
-                        alert(`ACESSO BLOQUEADO\n\n${motivo}\n\nEntre em contato para regularizar.`);
-                        await _supabase.auth.signOut();
-                        window.location.href = 'Login/login.html';
-                        return;
-                    }
-
+                    
+                    // Remove o timer se ele ainda existir no HTML
                     const timerElement = document.getElementById('subscription-timer');
-                    if (timerElement && dataAlvo && !bloqueado) {
-                        const diffTime = Math.abs(dataAlvo - agora);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                        
-                        if (diffDays <= 3) {
-                            timerElement.style.color = "#dc3545"; 
-                        }
-
-                        if(loja.status_assinatura === 'teste') {
-                             timerElement.textContent = `Teste: Restam ${diffDays} dias`;
-                        } else {
-                             timerElement.textContent = `Assinatura: Restam ${diffDays} dias`;
-                        }
-                    } else if (timerElement && textoStatus) {
-                        timerElement.textContent = textoStatus;
+                    if (timerElement) {
+                        timerElement.style.display = 'none';
                     }
                 }
             }

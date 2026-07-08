@@ -11,7 +11,10 @@
     <div class="container">
         <header>
             <h1>Gerenciamento de Lojas</h1>
-            <button class="btn-voltar" onclick="window.location.href='../index.html'">Voltar ao Sistema</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="action-btn btn-ativar" id="btn-nova-loja" style="padding: 10px 15px; font-weight: bold;">+ Nova Loja</button>
+                <button class="btn-voltar" onclick="window.location.href='../index.html'">Voltar ao Sistema</button>
+            </div>
         </header>
 
         <div id="loading" class="loading">Verificando permissões e carregando dados...</div>
@@ -21,9 +24,8 @@
                 <tr>
                     <th>Loja / Empresa</th>
                     <th>Login (Dono)</th>
-                    <th>CNPJ</th>
+                    <th>CNPJ / CPF</th>
                     <th>Status</th>
-                    <th>Validade</th>
                     <th style="text-align: right;">Ações</th>
                 </tr>
             </thead>
@@ -52,17 +54,31 @@
         </div>
     </div>
 
-    <div id="modal-editar-dias" class="modal-overlay">
+    <div id="modal-nova-loja" class="modal-overlay">
         <div class="modal-box" style="max-width: 400px;">
-            <h2 class="modal-title">Ajustar Validade</h2>
-            <p style="color:#ccc; font-size:14px; margin-bottom:15px;">
-                Digite o total de dias restantes ou use <code>+30</code> para somar.
-            </p>
-            <input type="text" id="input-dias" placeholder="Ex: 30 ou +15" 
-                   style="width:100%; padding:10px; margin-bottom:20px; background:#333; border:1px solid #555; color:#fff; border-radius:5px;">
+            <button class="modal-close btn-fechar-modal">×</button>
+            <h2 class="modal-title">Cadastrar Nova Loja</h2>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom:5px; color:#ccc;">Nome da Loja</label>
+                <input type="text" id="novo-nome" placeholder="Ex: Decorart" style="width:100%; padding:10px; background:#333; border:1px solid #555; color:#fff; border-radius:5px;" required>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom:5px; color:#ccc;">CNPJ ou CPF (Opcional)</label>
+                <input type="text" id="novo-cnpj" placeholder="Digite apenas números ou deixe vazio" style="width:100%; padding:10px; background:#333; border:1px solid #555; color:#fff; border-radius:5px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom:5px; color:#ccc;">Telefone / WhatsApp (Opcional)</label>
+                <input type="text" id="novo-telefone" placeholder="Ex: 11999999999" style="width:100%; padding:10px; background:#333; border:1px solid #555; color:#fff; border-radius:5px;">
+            </div>
+            <div style="margin-bottom: 25px;">
+                <label style="display:block; margin-bottom:5px; color:#ccc;">E-mail de Login do Dono</label>
+                <input type="email" id="novo-email" placeholder="E-mail para login" style="width:100%; padding:10px; background:#333; border:1px solid #555; color:#fff; border-radius:5px;" required>
+            </div>
+            
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="action-btn btn-voltar btn-fechar-modal" style="background:#444;">Cancelar</button>
-                <button id="btn-salvar-dias" class="action-btn btn-ativar">Salvar</button>
+                <button id="btn-salvar-nova-loja" class="action-btn btn-ativar">Criar Loja</button>
             </div>
         </div>
     </div>

@@ -26,7 +26,8 @@ button.action-btn:hover { opacity: 0.8; transform: translateY(-1px); }
 .btn-ativar { background: #28a745; }
 .btn-bloquear { background: #dc3545; } 
 .btn-desbloquear { background: #ffc107; color: #333 !important; } 
-.btn-renovar { background: #007bff; }
+.btn-funcionarios { background: #17a2b8; }
+.btn-excluir { background: #6c757d; }
 .btn-edit-dias { background: none; border: 1px solid #555; color: #aaa !important; padding: 4px 8px; font-size: 14px; } 
 .btn-edit-dias:hover { background: #333; color: #fff !important; }
 
