@@ -234,7 +234,7 @@ function prepararAcao(id, tipo, nomeLoja = '') {
         modalConfirm.style.display = 'flex';
     }
     else if (tipo === 'excluir') {
-        titulo.textContent = `EXCLUIR LOJA: ${nomeLoja.toUpperCase()}`;
+        titulo.textContent = `EXCLUIR LOJA: ${nomeLoja}`;
         titulo.style.color = "#dc3545";
         texto.innerHTML = "Esta ação é irreversível e removerá todos os dados da loja.";
         btn.textContent = "Excluir";

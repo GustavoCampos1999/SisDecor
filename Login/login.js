@@ -30,11 +30,12 @@ function loadSavedAccounts() {
             const row = document.createElement('div');
             row.style.display = 'flex';
             row.style.gap = '8px';
+            row.style.alignItems = 'center';
 
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.style.flex = '1';
-            btn.style.padding = '15px';
+            btn.style.padding = '12px 15px';
             btn.style.border = '1px solid #ddd';
             btn.style.borderRadius = '8px';
             btn.style.background = '#fff';
@@ -57,18 +58,45 @@ function loadSavedAccounts() {
             btnRemove.style.background = 'transparent';
             btnRemove.style.color = '#aaa';
             btnRemove.style.border = '1px solid #ddd';
-            btnRemove.style.borderRadius = '8px';
+            btnRemove.style.borderRadius = '6px';
             btnRemove.style.cursor = 'pointer';
-            btnRemove.style.padding = '0 15px';
+            btnRemove.style.width = '32px';
+            btnRemove.style.height = '32px';
+            btnRemove.style.padding = '0';
+            btnRemove.style.display = 'flex';
+            btnRemove.style.alignItems = 'center';
+            btnRemove.style.justifyContent = 'center';
+            btnRemove.style.fontSize = '12px';
             btnRemove.style.transition = '0.2s';
             btnRemove.onmouseover = () => { btnRemove.style.background = '#ffe5e5'; btnRemove.style.color = '#d32f2f'; btnRemove.style.borderColor = '#ffcccc'; };
             btnRemove.onmouseout = () => { btnRemove.style.background = 'transparent'; btnRemove.style.color = '#aaa'; btnRemove.style.borderColor = '#ddd'; };
             btnRemove.onclick = () => {
-                if (confirm(`Deseja remover a conta de ${acc.email} dos acessos salvos?`)) {
+                const modalHtml = `
+                    <div id="modal-remove-account" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 10000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;">
+                        <div style="background: #1e1e1e; padding: 25px; border-radius: 8px; width: 350px; max-width: 90%; text-align: center; color: white; border: 1px solid #444; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                            <h3 style="margin-top: 0; color: #e06c6e; font-size: 18px;">Remover Conta</h3>
+                            <p style="color: #ccc; font-size: 14px; margin-bottom: 25px;">Deseja remover a conta de <strong>${acc.email}</strong> dos acessos salvos neste dispositivo?</p>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button id="btn-modal-remover" style="padding: 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s;">Sim, remover conta</button>
+                                <button id="btn-modal-cancelar" style="padding: 10px; background: transparent; color: #aaa; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: 0.2s; margin-top: 5px;">Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                const modal = document.getElementById('modal-remove-account');
+
+                document.getElementById('btn-modal-remover').onclick = () => {
                     const newSaved = saved.filter(s => s.email !== acc.email);
                     localStorage.setItem('sisdecor_saved_accounts', JSON.stringify(newSaved));
+                    modal.remove();
                     loadSavedAccounts();
-                }
+                };
+
+                document.getElementById('btn-modal-cancelar').onclick = () => {
+                    modal.remove();
+                };
             };
 
             row.appendChild(btn);
@@ -164,7 +192,7 @@ formLogin.addEventListener('submit', async (e) => {
             if (error.message.includes('Invalid login credentials')) {
                 msgErro.textContent = 'Email ou senha incorretos.';
             } else if (error.message.includes('Email not confirmed')) {
-                msgErro.textContent = 'Seu email ainda não foi confirmado.';
+                msgErro.textContent = 'Conta não ativada, verifique o e-mail nesses casos';
             } else {
                 msgErro.textContent = 'Erro ao entrar: ' + error.message;
             }

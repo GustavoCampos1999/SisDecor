@@ -123,6 +123,16 @@
         body.dark-mode #saved-accounts-list button:hover {
             background: #3a3a3a !important;
         }
+        body.dark-mode .message-error {
+            background-color: rgba(220, 53, 69, 0.15) !important;
+            border: 1px solid rgba(220, 53, 69, 0.3) !important;
+            color: #ff6b6b !important;
+        }
+        body.dark-mode .message-success {
+            background-color: rgba(40, 167, 69, 0.15) !important;
+            border: 1px solid rgba(40, 167, 69, 0.3) !important;
+            color: #51cf66 !important;
+        }
 
 .login-header-title {
     font-size: 1.2em;
