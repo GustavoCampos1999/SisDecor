@@ -71,7 +71,7 @@ async function initAdmin() {
         const nomeDono = document.getElementById('novo-dono').value;
         const cnpj = document.getElementById('novo-cnpj').value;
         const telefone = document.getElementById('novo-telefone').value;
-        const email = document.getElementById('new-loja-email').value;
+        const email = document.getElementById('novo-email').value;
 
         if (!nome || !email || !nomeDono) {
             showToast('Nome da Empresa, Nome do Proprietário e E-mail são obrigatórios!', 'error');
@@ -172,7 +172,7 @@ function renderizarTabela(lojas, perfis) {
             <td>${emailDono}</td>
             <td>${loja.cnpj || '-'}</td>
             <td>${statusBadge}</td>
-            <td style="text-align: right; display: flex; gap: 5px; justify-content: flex-end;">
+            <td class="td-actions">
                 ${btnStatusHtml}
                 <button class="action-btn btn-funcionarios" data-id="${loja.id}">Ver Equipe</button>
                 <button class="action-btn btn-excluir" data-id="${loja.id}" data-action="excluir">Apagar</button>

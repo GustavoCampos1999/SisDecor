@@ -61,8 +61,41 @@ button.action-btn:hover { opacity: 0.8; transform: translateY(-1px); }
     .edit-row > div {
         width: 100%;
     }
-    .actions-group {
+    .td-actions {
         flex-direction: column;
         align-items: flex-end;
     }
+}
+
+.td-actions {
+    display: flex;
+    gap: 5px;
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.admin-input {
+    width: 100%;
+    padding: 12px;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: #fff;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-input:focus {
+    outline: none;
+    border-color: #e06c6e;
+    box-shadow: 0 0 0 2px rgba(224, 108, 110, 0.2);
+}
+
+.admin-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #eee;
+    font-size: 13px;
+    font-weight: 500;
 }

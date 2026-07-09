@@ -63,34 +63,34 @@
     </div>
 
     <div id="modal-nova-loja" class="modal-overlay">
-        <div class="modal-box" style="max-width: 400px;">
+        <div class="modal-box" style="padding: 30px;">
             <button class="modal-close btn-fechar-modal">×</button>
-            <h2 class="modal-title">Cadastrar Nova Loja</h2>
+            <h2 class="modal-title" style="margin-bottom: 25px; font-size: 20px;">Cadastrar Nova Loja</h2>
             
-            <div style="margin-bottom: 15px;">
-                <label style="display:block; margin-bottom:5px; color:#ccc;">Nome da Empresa/Loja</label>
-                <input type="text" id="novo-nome" placeholder="Ex: Decorart" style="width:100%; padding:10px; background:#333; border:1px solid #555; color:#fff; border-radius:5px;" required>
+            <div style="margin-bottom: 20px;">
+                <label class="admin-label">Nome da Empresa / Loja</label>
+                <input type="text" id="novo-nome" class="admin-input" placeholder="Ex: Decorart" required>
             </div>
-            <div style="margin-bottom: 15px;">
-                <label style="display:block; margin-bottom:5px; color:#ccc;">Nome do Proprietário</label>
-                <input type="text" id="novo-dono" placeholder="Ex: João da Silva" style="width:100%; padding:10px; background:#333; border:1px solid #555; color:#fff; border-radius:5px;" required>
+            <div style="margin-bottom: 20px;">
+                <label class="admin-label">Nome do Proprietário</label>
+                <input type="text" id="novo-dono" class="admin-input" placeholder="Ex: João da Silva" required>
             </div>
-            <div style="margin-bottom: 15px;">
-                <label style="display:block; margin-bottom:5px; color:#ccc;">CNPJ ou CPF</label>
-                <input type="text" id="novo-cnpj" placeholder="Apenas números" style="width:100%; padding:10px; background:#333; border:1px solid #555; color:#fff; border-radius:5px;">
+            <div style="margin-bottom: 20px;">
+                <label class="admin-label">CNPJ ou CPF</label>
+                <input type="text" id="novo-cnpj" class="admin-input" placeholder="Apenas números">
             </div>
-            <div style="margin-bottom: 15px;">
-                <label style="display:block; margin-bottom:5px; color:#ccc;">Telefone / WhatsApp</label>
-                <input type="text" id="novo-telefone" placeholder="Ex: 11999999999" style="width:100%; padding:10px; background:#333; border:1px solid #555; color:#fff; border-radius:5px;">
+            <div style="margin-bottom: 20px;">
+                <label class="admin-label">Telefone / WhatsApp</label>
+                <input type="text" id="novo-telefone" class="admin-input" placeholder="Ex: 11999999999">
             </div>
-            <div style="margin-bottom: 25px;">
-                <label style="display:block; margin-bottom:5px; color:#ccc;">E-mail de Login do Proprietário</label>
-                <input type="email" id="novo-email" placeholder="E-mail para login" style="width:100%; padding:10px; background:#333; border:1px solid #555; color:#fff; border-radius:5px;" required>
+            <div style="margin-bottom: 30px;">
+                <label class="admin-label">E-mail de Login do Proprietário</label>
+                <input type="email" id="novo-email" class="admin-input" placeholder="E-mail para login" required>
             </div>
             
-            <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="action-btn btn-voltar btn-fechar-modal" style="background:#444;">Cancelar</button>
-                <button id="btn-salvar-nova-loja" class="action-btn btn-ativar">Criar Loja</button>
+            <div style="display: flex; justify-content: flex-end; gap: 15px;">
+                <button class="action-btn btn-voltar btn-fechar-modal" style="background:transparent; color:#aaa; border:1px solid #555; padding: 10px 20px;">Cancelar</button>
+                <button id="btn-salvar-nova-loja" class="action-btn btn-ativar" style="padding: 10px 20px; font-size: 14px;">Criar Loja</button>
             </div>
         </div>
     </div>
