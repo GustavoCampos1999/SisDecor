@@ -218,17 +218,17 @@ function prepararAcao(id, tipo, nomeLoja = '') {
     btn.style.opacity = '1';
 
     if (tipo === 'bloquear') {
-        titulo.textContent = "Bloquear Acesso";
+        titulo.textContent = `Bloquear: ${nomeLoja}`;
         titulo.style.color = "#dc3545";
-        texto.innerHTML = "O usuário não conseguirá mais fazer login.<br>Deseja continuar?";
+        texto.innerHTML = `O acesso de <strong>${nomeLoja}</strong> será suspenso e o usuário não conseguirá mais fazer login.<br>Deseja continuar?`;
         btn.textContent = "Bloquear";
         btn.className = "action-btn btn-bloquear";
         modalConfirm.style.display = 'flex';
     }
     else if (tipo === 'desbloquear') {
-        titulo.textContent = "Desbloquear";
+        titulo.textContent = `Desbloquear: ${nomeLoja}`;
         titulo.style.color = "#ffc107";
-        texto.innerHTML = "O acesso será restaurado.";
+        texto.innerHTML = `O acesso de <strong>${nomeLoja}</strong> será restaurado.`;
         btn.textContent = "Desbloquear";
         btn.className = "action-btn btn-desbloquear";
         modalConfirm.style.display = 'flex';

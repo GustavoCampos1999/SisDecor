@@ -10,16 +10,30 @@ const savedAccountsList = document.getElementById('saved-accounts-list');
 const btnOutraConta = document.getElementById('btn-outra-conta');
 const chkSalvarConta = document.getElementById('chk-salvar-conta');
 
+const btnVoltarSalvasContainer = document.getElementById('voltar-contas-salvas-container');
+const btnVoltarSalvas = document.getElementById('btn-voltar-salvas');
+
 function loadSavedAccounts() {
+    const theme = localStorage.getItem('theme');
+    if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+
     const saved = JSON.parse(localStorage.getItem('sisdecor_saved_accounts') || '[]');
     if (saved.length > 0 && savedAccountsContainer) {
         savedAccountsContainer.style.display = 'block';
         formLogin.style.display = 'none';
+        if(btnVoltarSalvasContainer) btnVoltarSalvasContainer.style.display = 'none';
         
         savedAccountsList.innerHTML = '';
         saved.forEach(acc => {
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.gap = '8px';
+
             const btn = document.createElement('button');
             btn.type = 'button';
+            btn.style.flex = '1';
             btn.style.padding = '15px';
             btn.style.border = '1px solid #ddd';
             btn.style.borderRadius = '8px';
@@ -35,8 +49,36 @@ function loadSavedAccounts() {
                 inputSenha.value = atob(acc.hash);
                 formLogin.dispatchEvent(new Event('submit'));
             };
-            savedAccountsList.appendChild(btn);
+
+            const btnRemove = document.createElement('button');
+            btnRemove.type = 'button';
+            btnRemove.textContent = '✖';
+            btnRemove.title = 'Remover conta salva';
+            btnRemove.style.background = 'transparent';
+            btnRemove.style.color = '#aaa';
+            btnRemove.style.border = '1px solid #ddd';
+            btnRemove.style.borderRadius = '8px';
+            btnRemove.style.cursor = 'pointer';
+            btnRemove.style.padding = '0 15px';
+            btnRemove.style.transition = '0.2s';
+            btnRemove.onmouseover = () => { btnRemove.style.background = '#ffe5e5'; btnRemove.style.color = '#d32f2f'; btnRemove.style.borderColor = '#ffcccc'; };
+            btnRemove.onmouseout = () => { btnRemove.style.background = 'transparent'; btnRemove.style.color = '#aaa'; btnRemove.style.borderColor = '#ddd'; };
+            btnRemove.onclick = () => {
+                if (confirm(`Deseja remover a conta de ${acc.email} dos acessos salvos?`)) {
+                    const newSaved = saved.filter(s => s.email !== acc.email);
+                    localStorage.setItem('sisdecor_saved_accounts', JSON.stringify(newSaved));
+                    loadSavedAccounts();
+                }
+            };
+
+            row.appendChild(btn);
+            row.appendChild(btnRemove);
+            savedAccountsList.appendChild(row);
         });
+    } else if (savedAccountsContainer) {
+        savedAccountsContainer.style.display = 'none';
+        formLogin.style.display = 'block';
+        if(btnVoltarSalvasContainer) btnVoltarSalvasContainer.style.display = 'none';
     }
 }
 
@@ -46,6 +88,13 @@ if (btnOutraConta) {
         formLogin.style.display = 'block';
         inputEmail.value = '';
         inputSenha.value = '';
+        if(btnVoltarSalvasContainer) btnVoltarSalvasContainer.style.display = 'block';
+    };
+}
+
+if (btnVoltarSalvas) {
+    btnVoltarSalvas.onclick = () => {
+        loadSavedAccounts();
     };
 }
 

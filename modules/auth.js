@@ -108,16 +108,17 @@ export function setupLogoutButton() {
                 console.warn(e);
             }
             
+            const theme = localStorage.getItem('theme');
+            
             if (keepSaved) {
                 const saved = localStorage.getItem('sisdecor_saved_accounts');
                 localStorage.clear();
                 if (saved) localStorage.setItem('sisdecor_saved_accounts', saved);
             } else {
-                // If removing, we want to remove THIS specific account from saved list, 
-                // but since they are logging out completely, it's safer to just clear all or prompt? 
-                // Let's just remove all saved accounts for now to be fully logged out of device.
                 localStorage.clear();
             }
+            
+            if (theme) localStorage.setItem('theme', theme);
             
             window.location.href = './Login/login.html';
         };

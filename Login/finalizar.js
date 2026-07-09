@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (lojaId) {
             const { data: loja, error: lojaError } = await _supabase
                 .from('lojas')
-                .select('nome_empresa, nome, cnpj, telefone, endereco')
+                .select('*')
                 .eq('id', lojaId)
                 .single();
 

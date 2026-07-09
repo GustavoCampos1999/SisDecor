@@ -67,8 +67,61 @@
         }
         #mensagem-erro {
             color: #dc3545;
-            margin-top: 15px;
-            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        /* --- DARK MODE STYLES --- */
+        body.dark-mode {
+            background-color: #121212;
+        }
+        body.dark-mode .login-container {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+        body.dark-mode .login-container input[type="text"],
+        body.dark-mode .login-container input[type="password"],
+        body.dark-mode .login-container input[type="email"] {
+            background-color: #2a2a2a;
+            color: #fff;
+            border-color: #444;
+        }
+        body.dark-mode .login-container label {
+            color: #eee !important;
+        }
+        body.dark-mode .login-container p {
+            color: #ccc !important;
+        }
+        body.dark-mode #btn-outra-conta {
+            color: #ccc !important;
+            border-color: #555 !important;
+        }
+        body.dark-mode #btn-outra-conta:hover {
+            background-color: #333 !important;
+        }
+        body.dark-mode #btn-contato {
+            border-color: #555 !important;
+            color: #e0e0e0 !important;
+        }
+        body.dark-mode #btn-contato:hover {
+            background-color: #b11518 !important;
+            border-color: #b11518 !important;
+            color: #fff !important;
+        }
+        body.dark-mode .login-link {
+            color: #ffc107;
+        }
+        body.dark-mode .login-link:hover {
+            color: #ffcd39;
+        }
+        body.dark-mode #saved-accounts-list button {
+            background: #2a2a2a !important;
+            color: #fff !important;
+            border-color: #444 !important;
+        }
+        body.dark-mode #saved-accounts-list button:hover {
+            background: #3a3a3a !important;
         }
 
 .login-header-title {
