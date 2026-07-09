@@ -3,6 +3,36 @@ import { _supabase } from '../supabaseClient.js';
 let perfisCache = []; 
 let acaoPendente = null;
 
+window.showToast = function(msg, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.style.background = type === 'error' ? '#dc3545' : (type === 'warning' ? '#ffc107' : '#28a745');
+    toast.style.color = type === 'warning' ? '#333' : '#fff';
+    toast.style.padding = '12px 20px';
+    toast.style.borderRadius = '5px';
+    toast.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
+    toast.style.fontSize = '14px';
+    toast.style.fontWeight = 'bold';
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-20px)';
+    toast.style.transition = 'all 0.3s ease';
+    toast.textContent = msg;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    }, 10);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-20px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+};
+
 initAdmin();
 
 async function initAdmin() {
@@ -41,10 +71,10 @@ async function initAdmin() {
         const nomeDono = document.getElementById('novo-dono').value;
         const cnpj = document.getElementById('novo-cnpj').value;
         const telefone = document.getElementById('novo-telefone').value;
-        const email = document.getElementById('novo-email').value;
+        const email = document.getElementById('new-loja-email').value;
 
         if (!nome || !email || !nomeDono) {
-            alert('Nome da Empresa, Nome do Proprietário e E-mail são obrigatórios!');
+            showToast('Nome da Empresa, Nome do Proprietário e E-mail são obrigatórios!', 'error');
             return;
         }
 
@@ -66,12 +96,12 @@ async function initAdmin() {
             const data = await response.json();
             if (!response.ok) throw new Error(data.erro || 'Erro ao criar loja');
 
-            alert('Loja criada com sucesso! O cliente já pode logar colocando o e-mail (a senha ficará vazia para ele definir).');
+            showToast('Loja criada com sucesso e convite enviado!');
             document.getElementById('modal-nova-loja').style.display = 'none';
             carregarDados(); 
 
         } catch (err) {
-            alert(err.message);
+            showToast(err.message, 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = 'Criar Loja';
@@ -112,7 +142,8 @@ async function carregarDados() {
         renderizarTabela(lojas, perfis);
 
     } catch (error) {
-        alert(error.message);
+        showToast(error.message, 'error');
+        document.getElementById('loading').textContent = 'Erro ao carregar dados.';
     }
 }
 
@@ -158,7 +189,7 @@ function renderizarTabela(lojas, perfis) {
                 if (btn.classList.contains('btn-funcionarios')) {
                     abrirModalFuncionarios(btn.dataset.id, nomeLoja, loja.owner_user_id);
                 } else {
-                    prepararAcao(btn.dataset.id, btn.dataset.action);
+                    prepararAcao(btn.dataset.id, btn.dataset.action, nomeLoja);
                 }
             });
         });
@@ -170,13 +201,21 @@ function renderizarTabela(lojas, perfis) {
     document.getElementById('tabela-lojas').style.display = 'table';
 }
 
-function prepararAcao(id, tipo) {
-    acaoPendente = { id, tipo };
+function prepararAcao(id, tipo, nomeLoja = '') {
+    acaoPendente = { id, tipo, nomeLoja };
     
     const modalConfirm = document.getElementById('modal-confirmacao');
     const titulo = document.getElementById('modal-confirm-titulo');
     const texto = document.getElementById('modal-confirm-texto');
     const btn = document.getElementById('btn-confirm-acao');
+    const containerVerificacao = document.getElementById('container-verificacao-exclusao');
+    const inpConfirmarNome = document.getElementById('inp-confirmar-nome');
+
+    // Reset styles
+    containerVerificacao.style.display = 'none';
+    inpConfirmarNome.value = '';
+    btn.disabled = false;
+    btn.style.opacity = '1';
 
     if (tipo === 'bloquear') {
         titulo.textContent = "Bloquear Acesso";
@@ -195,11 +234,28 @@ function prepararAcao(id, tipo) {
         modalConfirm.style.display = 'flex';
     }
     else if (tipo === 'excluir') {
-        titulo.textContent = "Excluir Loja";
+        titulo.textContent = `EXCLUIR LOJA: ${nomeLoja.toUpperCase()}`;
         titulo.style.color = "#dc3545";
         texto.innerHTML = "Esta ação é irreversível e removerá todos os dados da loja.";
         btn.textContent = "Excluir";
         btn.className = "action-btn btn-excluir";
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        
+        containerVerificacao.style.display = 'block';
+        
+        inpConfirmarNome.oninput = (e) => {
+            if (e.target.value === nomeLoja) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.background = '#dc3545';
+            } else {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.background = '#6c757d';
+            }
+        };
+
         modalConfirm.style.display = 'flex';
     }
 }
@@ -219,10 +275,11 @@ async function executarAcaoReal(acao) {
         const data = await response.json();
         if (!response.ok) throw new Error(data.erro || 'Erro ao executar ação');
         
-        if (acao.tipo === 'excluir') alert('Loja excluída!');
+        if (acao.tipo === 'excluir') showToast('Loja excluída!');
+        else showToast('Ação concluída com sucesso!');
         carregarDados();
     } catch (e) {
-        alert("Erro: " + e.message);
+        showToast("Erro: " + e.message, 'error');
     }
 }
 
@@ -249,18 +306,19 @@ window.abrirModalFuncionarios = (lojaId, nomeLoja, ownerUserId) => {
             <div style="flex: 1; overflow: hidden; padding-right: 10px;">
                 <div style="display: flex; align-items: center; margin-bottom: 2px;">
                     <strong id="val-nome_membro_${f.user_id}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${f.nome_usuario || 'Usuário Sem Nome'}</strong>
-                    <input type="text" id="inp-nome_membro_${f.user_id}" class="edit-input" value="${f.nome_usuario || ''}" style="display:none; width: 120px; background: #333; color: white; border: 1px solid #555; padding: 2px;">
-                    <button class="btn-edit-field" onclick="toggleEdit('nome_membro_${f.user_id}', '${lojaId}', '${f.user_id}')" style="background:none; border:none; color:#e06c6e; cursor:pointer; padding-left: 5px;">✏️</button>
+                    <input type="text" id="inp-nome_membro_${f.user_id}" class="edit-input" value="${f.nome_usuario || ''}" style="display:none; width: 100%; background: #333; color: white; border: 1px solid #555; padding: 2px;">
                 </div>
                 <div style="display: flex; align-items: center;">
-                    <span class="info-text" id="val-email_membro_${f.user_id}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">${emailMembro}</span>
-                    <input type="email" id="inp-email_membro_${f.user_id}" class="edit-input" value="${emailMembro}" style="display:none; width: 140px; background: #333; color: white; border: 1px solid #555; padding: 2px;">
-                    <button class="btn-edit-field" onclick="toggleEdit('email_membro_${f.user_id}', '${lojaId}', '${f.user_id}')" style="background:none; border:none; color:#e06c6e; cursor:pointer; padding-left: 5px;">✏️</button>
+                    <span class="info-text" id="val-email_membro_${f.user_id}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; font-size: 12px; color: #aaa;">${emailMembro}</span>
+                    <input type="email" id="inp-email_membro_${f.user_id}" class="edit-input" value="${emailMembro}" style="display:none; width: 100%; background: #333; color: white; border: 1px solid #555; padding: 2px; margin-top: 5px;">
                 </div>
             </div>
-            <div style="text-align: right; min-width: 65px;">
-                <span class="user-role">${f.role || 'Vendedor'}</span><br>
-                <button class="action-btn btn-excluir" onclick="excluirMembro('${f.user_id}', '${lojaId}')" style="margin-top: 5px; padding: 4px 8px; font-size: 11px;">Excluir</button>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 65px; gap: 5px;">
+                <span class="user-role">${f.role || 'Vendedor'}</span>
+                <div style="display: flex; gap: 5px;">
+                    <button id="btn-edit-membro_${f.user_id}" class="btn-edit-field" onclick="toggleEditMembro('${f.user_id}', '${lojaId}')" style="background:#444; border:none; border-radius: 4px; color:#fff; cursor:pointer; padding: 4px 8px; font-size: 11px;">Editar</button>
+                    <button class="action-btn btn-excluir" onclick="excluirMembro('${f.user_id}', '${lojaId}')" style="padding: 4px 8px; font-size: 11px;">Excluir</button>
+                </div>
             </div>
         `;
         listaDiv.appendChild(div);
@@ -280,11 +338,78 @@ window.excluirMembro = async (userId, lojaId) => {
             const data = await resp.json();
             throw new Error(data.erro || 'Erro ao excluir membro.');
         }
-        alert('Membro excluído!');
-        carregarDados();
+        
+        showToast('Membro excluído!');
+        carregarDados(); 
         document.getElementById('modal-funcionarios').style.display = 'none';
     } catch(e) {
-        alert(e.message);
+        showToast(e.message, 'error');
+    }
+};
+
+window.toggleEditMembro = async (userId, lojaId) => {
+    const valNome = document.getElementById(`val-nome_membro_${userId}`);
+    const inpNome = document.getElementById(`inp-nome_membro_${userId}`);
+    const valEmail = document.getElementById(`val-email_membro_${userId}`);
+    const inpEmail = document.getElementById(`inp-email_membro_${userId}`);
+    const btnEdit = document.getElementById(`btn-edit-membro_${userId}`);
+    
+    const isEditing = inpNome.style.display === 'block' || inpNome.style.display === 'inline-block';
+    
+    if (!isEditing) {
+        valNome.style.display = 'none';
+        inpNome.style.display = 'block';
+        valEmail.style.display = 'none';
+        inpEmail.style.display = 'block';
+        btnEdit.textContent = 'Salvar';
+        btnEdit.style.background = '#28a745';
+        inpNome.focus();
+    } else {
+        const newNome = inpNome.value;
+        const newEmail = inpEmail.value;
+        if (!newNome || !newEmail) {
+            showToast('Nome e E-mail não podem ficar vazios!', 'warning');
+            return;
+        }
+
+        const baseUrl = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : 'https://painel-de-controle-gcv.onrender.com';
+
+        try {
+            // Update Nome
+            let resp = await fetch(`${baseUrl}/admin/loja/${lojaId}/editar`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ field: `nome_membro_${userId}`, value: newNome, userId: userId })
+            });
+            if(!resp.ok) throw new Error("Erro ao atualizar nome");
+
+            // Update Email
+            if (newEmail !== valEmail.textContent) {
+                resp = await fetch(`${baseUrl}/admin/loja/${lojaId}/editar`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ field: `email_membro_${userId}`, value: newEmail, userId: userId })
+                });
+                if(!resp.ok) throw new Error("Erro ao atualizar email");
+            }
+
+            valNome.textContent = newNome;
+            valEmail.textContent = newEmail;
+            valNome.style.display = 'block';
+            inpNome.style.display = 'none';
+            valEmail.style.display = 'block';
+            inpEmail.style.display = 'none';
+            btnEdit.textContent = 'Editar';
+            btnEdit.style.background = '#444';
+            
+            showToast('Membro atualizado com sucesso!');
+            carregarDados();
+
+        } catch(e) {
+            showToast(e.message, 'error');
+        }
     }
 };
 
@@ -368,7 +493,7 @@ window.toggleEdit = async (field, lojaId, ownerUserId) => {
     } else {
         const newValue = inputField.value;
         if (!newValue) {
-            alert('O campo não pode ficar vazio!');
+            showToast('O campo não pode ficar vazio!', 'warning');
             return;
         }
 
@@ -391,10 +516,11 @@ window.toggleEdit = async (field, lojaId, ownerUserId) => {
             valSpan.textContent = newValue;
             valSpan.style.display = 'inline-block';
             inputField.style.display = 'none';
+            showToast('Alterado com sucesso!');
             carregarDados(); // Atualiza a tabela por trás
 
         } catch(e) {
-            alert(e.message);
+            showToast(e.message, 'error');
         }
     }
 };

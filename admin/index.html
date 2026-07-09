@@ -49,6 +49,12 @@
         <div class="modal-box" style="max-width: 400px; text-align: center;">
             <h2 id="modal-confirm-titulo" class="modal-title" style="border:none; padding:0; margin-bottom:10px;">Confirmar</h2>
             <p id="modal-confirm-texto" style="color:#ccc; margin-bottom: 25px;">Tem certeza?</p>
+            
+            <div id="container-verificacao-exclusao" style="display: none; margin-bottom: 20px;">
+                <p style="color: #e06c6e; font-size: 13px; margin-bottom: 10px;">Para continuar, digite o nome exato da loja abaixo:</p>
+                <input type="text" id="inp-confirmar-nome" style="width: 100%; padding: 10px; box-sizing: border-box; background: #333; color: white; border: 1px solid #555; border-radius: 5px; text-align: center;" placeholder="Nome da Loja" autocomplete="off">
+            </div>
+
             <div style="display: flex; justify-content: center; gap: 10px;">
                 <button class="action-btn btn-voltar btn-fechar-modal" style="background:#444;">Cancelar</button>
                 <button id="btn-confirm-acao" class="action-btn">Confirmar</button>
@@ -108,6 +114,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="script.js"></script>

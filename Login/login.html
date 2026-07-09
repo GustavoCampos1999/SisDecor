@@ -11,6 +11,14 @@
     <div class="login-container">
         <img src="../images/MainLogo.png" alt="Logo" id="login-logo">
 
+        <div id="saved-accounts-container" style="display: none; margin-bottom: 20px;">
+            <p style="color: #666; margin-bottom: 15px;">Selecione uma conta salva:</p>
+            <div id="saved-accounts-list" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Lista de contas salvas -->
+            </div>
+            <button type="button" id="btn-outra-conta" style="background-color: transparent; border: 1px solid #ccc; color: #555; margin-top: 15px;">Entrar com outra conta</button>
+        </div>
+
         <form id="form-login">
             <div>
                 <label for="email">Email</label>
@@ -21,7 +29,10 @@
                 <input type="password" id="senha" placeholder="Senha">
             </div>
             
-            <div class="forgot-password-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 13px;">
+                <label style="display: flex; align-items: center; gap: 5px; color: #555; cursor: pointer; text-align: left;">
+                    <input type="checkbox" id="chk-salvar-conta"> Salvar conta
+                </label>
                 <a href="forgot-password.html" class="login-link">Esqueci minha senha</a>
             </div>
 
