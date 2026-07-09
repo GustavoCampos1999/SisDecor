@@ -135,12 +135,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnSubmit.textContent = 'Salvando...';
 
         try {
+            console.log('--- Iniciando Finalização de Cadastro v2 ---');
             // 1. Atualizar Senha no Auth
-            const { error: authError } = await _supabase.auth.updateUser({
-                password: inpSenha.value
-            });
-            if (authError && !authError.message.includes('New password should be different from the old password')) {
-                throw authError;
+            try {
+                const { error: authError } = await _supabase.auth.updateUser({
+                    password: inpSenha.value
+                });
+                if (authError && !authError.message.includes('New password should be different from the old password')) {
+                    throw authError;
+                }
+            } catch (authErr) {
+                if (!authErr.message || !authErr.message.includes('New password should be different from the old password')) {
+                    throw authErr;
+                }
+                console.log('Ignorando erro de mesma senha.');
             }
 
             // 2. Atualizar Perfil
