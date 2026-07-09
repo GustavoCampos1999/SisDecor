@@ -139,7 +139,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { error: authError } = await _supabase.auth.updateUser({
                 password: inpSenha.value
             });
-            if (authError) throw authError;
+            if (authError && !authError.message.includes('New password should be different from the old password')) {
+                throw authError;
+            }
 
             // 2. Atualizar Perfil
             const { error: perfilUpdateErr } = await _supabase
@@ -158,7 +160,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const { error: lojaUpdateErr } = await _supabase
                     .from('lojas')
                     .update({
-                        nome_empresa: inpNomeEmpresa.value,
                         nome: inpNomeEmpresa.value,
                         endereco: inpEndereco.value,
                         telefone: telefoneFinal

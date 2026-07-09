@@ -102,20 +102,36 @@ export function setupLogoutButton() {
         const performLogout = async (keepSaved) => {
             modal.querySelector('div > div').innerHTML = '<p style="color: #fff; font-weight: bold;">Saindo...</p>';
             
+            let currentUserEmail = null;
             try {
+                const { data: { session } } = await _supabase.auth.getSession();
+                if (session) {
+                    currentUserEmail = session.user.email;
+                }
                 await _supabase.auth.signOut();
             } catch(e) {
                 console.warn(e);
             }
             
             const theme = localStorage.getItem('theme');
+            let savedAccounts = [];
+            try {
+                savedAccounts = JSON.parse(localStorage.getItem('sisdecor_saved_accounts') || '[]');
+            } catch(e) {}
+            
+            localStorage.clear();
             
             if (keepSaved) {
-                const saved = localStorage.getItem('sisdecor_saved_accounts');
-                localStorage.clear();
-                if (saved) localStorage.setItem('sisdecor_saved_accounts', saved);
+                if (savedAccounts.length > 0) {
+                    localStorage.setItem('sisdecor_saved_accounts', JSON.stringify(savedAccounts));
+                }
             } else {
-                localStorage.clear();
+                if (currentUserEmail) {
+                    const filteredAccounts = savedAccounts.filter(acc => acc.email !== currentUserEmail);
+                    if (filteredAccounts.length > 0) {
+                        localStorage.setItem('sisdecor_saved_accounts', JSON.stringify(filteredAccounts));
+                    }
+                }
             }
             
             if (theme) localStorage.setItem('theme', theme);

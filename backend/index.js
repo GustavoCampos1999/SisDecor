@@ -183,7 +183,7 @@ app.put('/admin/loja/:id/editar', async (req, res) => {
             const { error } = await supabaseService.from('perfis').update({ nome_usuario: value }).eq('user_id', userId);
             if (error) throw error;
         } else if (field === 'nome_empresa') {
-            const { error } = await supabaseService.from('lojas').update({ nome: value, nome_empresa: value }).eq('id', id);
+            const { error } = await supabaseService.from('lojas').update({ nome: value }).eq('id', id);
             if (error) throw error;
         } else if (field === 'cnpj' || field === 'telefone' || field === 'endereco') {
             const { error } = await supabaseService.from('lojas').update({ [field]: value }).eq('id', id);
@@ -205,8 +205,12 @@ app.post('/api/check-email', async (req, res) => {
         const { data: { users }, error } = await supabaseService.auth.admin.listUsers();
         if (error) throw error;
         
-        const exists = users.some(u => u.email === email);
-        res.json({ exists });
+        const user = users.find(u => u.email === email);
+        if (user) {
+            res.json({ exists: true, confirmed: !!user.email_confirmed_at });
+        } else {
+            res.json({ exists: false, confirmed: false });
+        }
     } catch(err) {
         res.status(500).json({ erro: err.message });
     }

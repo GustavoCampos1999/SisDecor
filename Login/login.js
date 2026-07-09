@@ -167,6 +167,25 @@ formLogin.addEventListener('submit', async (e) => {
             console.error('Erro no login:', error.message);
         
             if (error.message.includes('Invalid login credentials')) {
+                // Checa no backend se o email pelo menos existe e está confirmado
+                try {
+                    let baseUrl = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' 
+                        ? 'http://localhost:3000' 
+                        : 'https://painel-de-controle-gcv.onrender.com';
+                    const checkResp = await fetch(`${baseUrl}/api/check-email`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email })
+                    });
+                    if (checkResp.ok) {
+                        const { exists, confirmed } = await checkResp.json();
+                        if (exists && !confirmed) {
+                            msgErro.textContent = 'Conta não ativada, verifique o e-mail nesses casos';
+                            msgErro.style.display = 'block';
+                            return;
+                        }
+                    }
+                } catch(e) { console.warn(e); }
                 msgErro.textContent = 'Email ou senha incorretos.';
             } else if (error.message.includes('Email not confirmed')) {
                 msgErro.textContent = 'Conta não ativada, verifique o e-mail nesses casos';

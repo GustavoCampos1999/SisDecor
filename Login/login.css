@@ -96,9 +96,14 @@
         body.dark-mode #btn-outra-conta {
             color: #ccc !important;
             border-color: #555 !important;
+            background-color: transparent !important;
+            transition: all 0.2s ease !important;
         }
         body.dark-mode #btn-outra-conta:hover {
             background-color: #333 !important;
+            color: #ffc107 !important;
+            border-color: #ffc107 !important;
+            transform: translateY(-1px);
         }
         body.dark-mode #btn-contato {
             border-color: #555 !important;
@@ -157,6 +162,20 @@
             transform: translateY(1px) scale(0.98);
         }
 
+        #btn-outra-conta {
+            background-color: transparent;
+            color: #555;
+            border: 1px solid #ccc;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        #btn-outra-conta:hover {
+            background-color: #f8f9fa;
+            color: #ffc107;
+            border-color: #ffc107;
+            transform: translateY(-1px);
+        }
+
         .btn-remove-account {
             background: transparent;
             color: #aaa;
@@ -197,9 +216,10 @@
             border-color: #444;
         }
         body.dark-mode .btn-remove-account:hover {
-            background: rgba(220, 53, 69, 0.15);
-            color: #ff6b6b;
-            border-color: rgba(220, 53, 69, 0.3);
+            background: #dc3545 !important;
+            color: #fff !important;
+            border-color: #dc3545 !important;
+            transform: translateY(-1px);
         }
 
 .login-header-title {
