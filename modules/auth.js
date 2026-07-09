@@ -81,11 +81,49 @@ export function setupLogoutButton() {
 
     btnLogout.addEventListener('click', async (e) => {
         e.preventDefault();
-        btnLogout.disabled = true;
-        btnLogout.textContent = 'Saindo...';
+        
+        const modalHtml = `
+            <div id="modal-logout-confirm" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 10000; font-family: sans-serif;">
+                <div style="background: #1e1e1e; padding: 25px; border-radius: 8px; width: 350px; max-width: 90%; text-align: center; color: white; border: 1px solid #444; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                    <h3 style="margin-top: 0; color: #e06c6e; font-size: 18px;">Sair do Sistema</h3>
+                    <p style="color: #ccc; font-size: 14px; margin-bottom: 25px;">Deseja manter sua conta salva para entrar rapidamente na próxima vez?</p>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button id="btn-logout-manter" style="padding: 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s;">Sim, manter salva</button>
+                        <button id="btn-logout-remover" style="padding: 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s;">Não, remover e sair</button>
+                        <button id="btn-logout-cancelar" style="padding: 10px; background: transparent; color: #aaa; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: 0.2s; margin-top: 5px;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modal = document.getElementById('modal-logout-confirm');
+        
+        const performLogout = async (keepSaved) => {
+            modal.querySelector('div > div').innerHTML = '<p style="color: #fff; font-weight: bold;">Saindo...</p>';
+            
+            try {
+                await _supabase.auth.signOut();
+            } catch(e) {
+                console.warn(e);
+            }
+            
+            if (keepSaved) {
+                const saved = localStorage.getItem('sisdecor_saved_accounts');
+                localStorage.clear();
+                if (saved) localStorage.setItem('sisdecor_saved_accounts', saved);
+            } else {
+                // If removing, we want to remove THIS specific account from saved list, 
+                // but since they are logging out completely, it's safer to just clear all or prompt? 
+                // Let's just remove all saved accounts for now to be fully logged out of device.
+                localStorage.clear();
+            }
+            
+            window.location.href = './Login/login.html';
+        };
 
-        await _supabase.auth.signOut();
-        localStorage.clear(); 
-        window.location.href = './Login/login.html';
+        document.getElementById('btn-logout-manter').onclick = () => performLogout(true);
+        document.getElementById('btn-logout-remover').onclick = () => performLogout(false);
+        document.getElementById('btn-logout-cancelar').onclick = () => modal.remove();
     });
 }

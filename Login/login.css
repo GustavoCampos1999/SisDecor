@@ -31,7 +31,9 @@
             font-weight: bold;
             text-align: left;
         }
-        .login-container input {
+        .login-container input[type="text"],
+        .login-container input[type="password"],
+        .login-container input[type="email"] {
             width: 100%;
             padding: 10px;
             box-sizing: border-box; 
