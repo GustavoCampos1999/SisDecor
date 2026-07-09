@@ -120,12 +120,12 @@
         body.dark-mode .login-link:hover {
             color: #ffcd39;
         }
-        body.dark-mode #saved-accounts-list button {
+        body.dark-mode #saved-accounts-list .btn-saved-account {
             background: #2a2a2a !important;
             color: #fff !important;
             border-color: #444 !important;
         }
-        body.dark-mode #saved-accounts-list button:hover {
+        body.dark-mode #saved-accounts-list .btn-saved-account:hover {
             background: #3a3a3a !important;
         }
         body.dark-mode .message-error {
