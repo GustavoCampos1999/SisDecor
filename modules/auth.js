@@ -88,9 +88,9 @@ export function setupLogoutButton() {
                     <h3 style="margin-top: 0; color: #e06c6e; font-size: 18px;">Sair do Sistema</h3>
                     <p style="color: #ccc; font-size: 14px; margin-bottom: 25px;">Deseja manter sua conta salva para entrar rapidamente na próxima vez?</p>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button id="btn-logout-manter" style="padding: 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s;">Sim, manter salva</button>
-                        <button id="btn-logout-remover" style="padding: 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s;">Não, remover e sair</button>
-                        <button id="btn-logout-cancelar" style="padding: 10px; background: transparent; color: #aaa; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: 0.2s; margin-top: 5px;">Cancelar</button>
+                        <button id="btn-logout-manter" class="btn-modal-primary">Sim, manter salva</button>
+                        <button id="btn-logout-remover" class="btn-modal-danger">Não, remover e sair</button>
+                        <button id="btn-logout-cancelar" class="btn-modal-secondary">Cancelar</button>
                     </div>
                 </div>
             </div>

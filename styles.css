@@ -1455,3 +1455,22 @@ body.dark-mode .tabela-moderna tr:hover {
         box-sizing: border-box;
     }
 }
+
+/* Custom Modal Buttons */
+.btn-modal-primary {
+    padding: 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: all 0.2s ease;
+}
+.btn-modal-primary:hover { background: #218838; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(40,167,69,0.4); }
+.btn-modal-primary:active { transform: translateY(1px) scale(0.98); box-shadow: none; }
+
+.btn-modal-danger {
+    padding: 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: all 0.2s ease;
+}
+.btn-modal-danger:hover { background: #c82333; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(220,53,69,0.4); }
+.btn-modal-danger:active { transform: translateY(1px) scale(0.98); box-shadow: none; }
+
+.btn-modal-secondary {
+    padding: 10px; background: transparent; color: #aaa; border: 1px solid #555; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; font-weight: 500;
+}
+.btn-modal-secondary:hover { background: rgba(255,255,255,0.05); color: #ccc; border-color: #777; transform: translateY(-1px); }
+.btn-modal-secondary:active { transform: translateY(1px) scale(0.98); }
